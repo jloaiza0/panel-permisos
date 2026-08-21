@@ -54,9 +54,8 @@ body {
   margin: 0;
 }
 select, option {
-  color: #1E2A38 !important;
-  background-color: #FFFFFF !important;
-  color-scheme: light;
+  background-color: #1E2A38 !important;
+  color: #FFFFFF !important;
 }
 
 #root {
