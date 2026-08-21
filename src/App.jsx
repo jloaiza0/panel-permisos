@@ -227,7 +227,7 @@ export default function App() {
           </ResponsiveContainer>
         </Section>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, marginTop: 24 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 20, marginTop: 24 }}>
           <Section title="Por tipo de permiso" subtitle="Distribución de conceptos">
             <ResponsiveContainer width="100%" height={260}>
               <BarChart data={porConcepto} layout="vertical" margin={{ top: 8, right: 24, left: 8, bottom: 0 }}>
@@ -249,8 +249,8 @@ export default function App() {
               <BarChart data={topPersonas} layout="vertical" margin={{ top: 8, right: 24, left: 8, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#E5E1D5" horizontal={false} />
                 <XAxis type="number" tick={{ fontSize: 12, fill: "#6B6858" }} axisLine={false} tickLine={false} allowDecimals={false} />
-                <YAxis dataKey="nombre" type="category" width={130} tick={{ fontSize: 11, fill: "#1E2A38" }} axisLine={false} tickLine={false}
-                  tickFormatter={(v) => v.length > 18 ? v.slice(0, 17) + "…" : v} />
+                <YAxis dataKey="nombre" type="category" width={200} tick={{ fontSize: 12, fill: "#1E2A38" }} axisLine={false} tickLine={false}
+                tickFormatter={(v) => v.length > 26 ? v.slice(0, 25) + "…" : v} />
                 <Tooltip contentStyle={{ borderRadius: 8, border: "1px solid #DAD6C8", fontSize: 13 }} formatter={(v) => [v, "Permisos"]} />
                 <Bar dataKey="cantidad" fill="#D85A30" radius={[0, 4, 4, 0]} maxBarSize={16} />
               </BarChart>
@@ -258,7 +258,7 @@ export default function App() {
           </Section>
         </div>
 
-        {aniosComparables.length > 1 && (
+        {anioSel === "Todos" && aniosComparables.length > 1 && (
           <Section title="Comparativo entre años" subtitle="Todos los años, sin aplicar el filtro de arriba" style={{ marginTop: 24 }}>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
               <div>
