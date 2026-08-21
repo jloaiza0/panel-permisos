@@ -315,13 +315,13 @@ export default function App() {
               <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 16, flexWrap: "wrap" }}>
                 <div style={{ fontSize: 13, fontWeight: 600, color: "#6B6858" }}>Comparar año específico contra otro</div>
                 <select value={anioA ?? ""} onChange={(e) => setAnioA(Number(e.target.value))}
-                  style={{ padding: "6px 10px", borderRadius: 6, border: "1px solid #DAD6C8", fontSize: 13, background: "#FFFFFF", color: "#1E2A38" }}>
-                  {aniosComparables.map(a => <option key={a} value={a} style={{ color: "#1E2A38", background: "#FFFFFF" }}>{a}</option>)}
+                  style={{ padding: "6px 10px", borderRadius: 6, border: "1px solid #DAD6C8", fontSize: 13, background: "#FFFFFF", color: "#1E2A38", colorScheme: "light" }}>
+                  {aniosComparables.map(a => <option key={a} value={a}>{a}</option>)}
                 </select>
                 <span style={{ color: "#6B6858", fontSize: 13 }}>vs</span>
                 <select value={anioB ?? ""} onChange={(e) => setAnioB(Number(e.target.value))}
-                  style={{ padding: "6px 10px", borderRadius: 6, border: "1px solid #DAD6C8", fontSize: 13, background: "#FFFFFF", color: "#1E2A38" }}>
-                  {aniosComparables.map(a => <option key={a} value={a} style={{ color: "#1E2A38", background: "#FFFFFF" }}>{a}</option>)}
+                  style={{ padding: "6px 10px", borderRadius: 6, border: "1px solid #DAD6C8", fontSize: 13, background: "#FFFFFF", color: "#1E2A38", colorScheme: "light" }}>
+                  {aniosComparables.map(a => <option key={a} value={a}>{a}</option>)}
                 </select>
               </div>
 
