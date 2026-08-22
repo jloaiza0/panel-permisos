@@ -1,8 +1,9 @@
 import { useMemo, useState } from "react";
+import * as XLSX from "xlsx";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, Legend,
 } from "recharts";
-import { Clock, Users, FileText, TrendingUp, Search, RotateCcw } from "lucide-react";
+import { Clock, Users, FileText, TrendingUp, Search, RotateCcw, Download, Filter } from "lucide-react";
 import FileUploader from "./components/FileUploader";
 
 const MESES = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
@@ -24,6 +25,7 @@ export default function App() {
   const [datos, setDatos] = useState(null);
   const [nombreArchivo, setNombreArchivo] = useState("");
   const [anioSel, setAnioSel] = useState("Todos");
+  const [conceptoSel, setConceptoSel] = useState("Todos");
   const [busqueda, setBusqueda] = useState("");
 
   function handleDatosCargados(registros, nombreArchivo) {
@@ -41,6 +43,36 @@ export default function App() {
     setBusqueda("");
   }
 
+  function exportarExcel() {
+    const wb = XLSX.utils.book_new();
+
+    const wsResumen = XLSX.utils.json_to_sheet([
+      { Métrica: "Total permisos", Valor: kpis.totalPermisos },
+      { Métrica: "Horas totales", Valor: Number(kpis.totalHoras.toFixed(1)) },
+      { Métrica: "Personas con permisos", Valor: kpis.personas },
+      { Métrica: "Promedio por persona", Valor: Number(kpis.promedio.toFixed(1)) },
+    ]);
+    XLSX.utils.book_append_sheet(wb, wsResumen, "Resumen");
+
+    const wsConcepto = XLSX.utils.json_to_sheet(
+      porConcepto.map(c => ({ Concepto: c.concepto, Permisos: c.cantidad }))
+    );
+    XLSX.utils.book_append_sheet(wb, wsConcepto, "Por concepto");
+
+    const wsDetalle = XLSX.utils.json_to_sheet(
+      filtrado.map(r => ({
+        Fecha: r.fecha,
+        Nombre: r.nombre,
+        Concepto: r.concepto,
+        Horas: r.tiempoMin != null ? Number((r.tiempoMin / 60).toFixed(2)) : null,
+      }))
+    );
+    XLSX.utils.book_append_sheet(wb, wsDetalle, "Detalle");
+
+    const sufijo = `${anioSel}_${conceptoSel}`.replace(/\s+/g, "_");
+    XLSX.writeFile(wb, `permisos_${sufijo}.xlsx`);
+  }
+
   const anios = useMemo(
     () => (datos ? Array.from(new Set(datos.map(r => r.anio))).sort() : []),
     [datos]
@@ -48,8 +80,16 @@ export default function App() {
 
   const filtrado = useMemo(() => {
     if (!datos) return [];
-    return datos.filter(r => anioSel === "Todos" || r.anio === anioSel);
-  }, [datos, anioSel]);
+    return datos.filter(r =>
+      (anioSel === "Todos" || r.anio === anioSel) &&
+      (conceptoSel === "Todos" || r.concepto === conceptoSel)
+    );
+  }, [datos, anioSel, conceptoSel]);
+
+  const conceptosDisponibles = useMemo(
+    () => (datos ? Array.from(new Set(datos.map(r => r.concepto))).sort() : []),
+    [datos]
+  );
 
   const kpis = useMemo(() => {
     const totalPermisos = filtrado.length;
@@ -143,6 +183,39 @@ export default function App() {
     return { a: calc(anioA), b: calc(anioB) };
   }, [datos, anioA, anioB]);
 
+  const personasDisponibles = useMemo(
+    () => (datos ? Array.from(new Set(datos.map(r => r.nombre))).sort() : []),
+    [datos]
+  );
+
+  const [personaSel, setPersonaSel] = useState("");
+
+  const resumenPersona = useMemo(() => {
+    if (!datos || !personaSel) return null;
+    const regs = datos.filter(r => r.nombre === personaSel);
+    const anios = Array.from(new Set(regs.map(r => r.anio))).sort();
+
+    const porAnioPersona = anios.map(a => {
+      const regsAnio = regs.filter(r => r.anio === a);
+      const minutos = regsAnio.reduce((s, r) => s + (r.tiempoMin || 0), 0);
+      return { anio: a, cantidad: regsAnio.length, horas: Number((minutos / 60).toFixed(1)) };
+    });
+
+    const conceptoMap = {};
+    regs.forEach(r => { conceptoMap[r.concepto] = (conceptoMap[r.concepto] || 0) + 1; });
+    const porConceptoPersona = Object.entries(conceptoMap)
+      .map(([concepto, cantidad]) => ({ concepto, cantidad }))
+      .sort((a, b) => b.cantidad - a.cantidad);
+
+    const totalMin = regs.reduce((s, r) => s + (r.tiempoMin || 0), 0);
+    return {
+      total: regs.length,
+      totalHoras: Number((totalMin / 60).toFixed(1)),
+      porAnio: porAnioPersona,
+      porConcepto: porConceptoPersona,
+    };
+  }, [datos, personaSel]);
+
   const tablaBusqueda = useMemo(() => {
     if (!busqueda.trim()) return [];
     const q = busqueda.trim().toLowerCase();
@@ -199,6 +272,13 @@ export default function App() {
               </button>
             ))}
             <button
+              onClick={exportarExcel}
+              title="Exportar a Excel"
+              style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 12px", borderRadius: 6, border: "1px solid #0F6E56", background: "#0F6E56", color: "#FFFFFF", fontSize: 13, cursor: "pointer" }}
+            >
+              <Download size={14} /> Exportar
+            </button>
+            <button
               onClick={reiniciar}
               title="Cargar otro archivo"
               style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 12px", borderRadius: 6, border: "1px solid #DAD6C8", background: "#FFFFFF", color: "#6B6858", fontSize: 13, cursor: "pointer" }}
@@ -206,6 +286,26 @@ export default function App() {
               <RotateCcw size={14} /> Otro archivo
             </button>
           </div>
+        </div>
+
+        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 20 }}>
+          <Filter size={14} color="#6B6858" />
+          <span style={{ fontSize: 13, color: "#6B6858", fontWeight: 600 }}>Concepto:</span>
+          {["Todos", ...conceptosDisponibles].map(c => (
+            <button
+              key={c}
+              onClick={() => setConceptoSel(c)}
+              style={{
+                padding: "6px 12px", borderRadius: 6,
+                border: "1px solid " + (conceptoSel === c ? "#0F6E56" : "#DAD6C8"),
+                background: conceptoSel === c ? "#0F6E56" : "#FFFFFF",
+                color: conceptoSel === c ? "#FFFFFF" : "#1E2A38",
+                fontSize: 12, fontWeight: 600, cursor: "pointer",
+              }}
+            >
+              {c}
+            </button>
+          ))}
         </div>
 
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 14, marginBottom: 32 }}>
@@ -250,7 +350,7 @@ export default function App() {
                 <CartesianGrid strokeDasharray="3 3" stroke="#E5E1D5" horizontal={false} />
                 <XAxis type="number" tick={{ fontSize: 12, fill: "#6B6858" }} axisLine={false} tickLine={false} allowDecimals={false} />
                 <YAxis dataKey="nombre" type="category" width={200} interval={0} tick={{ fontSize: 12, fill: "#1E2A38" }} axisLine={false} tickLine={false}
-                tickFormatter={(v) => v.length > 26 ? v.slice(0, 25) + "…" : v} />
+                  tickFormatter={(v) => v.length > 26 ? v.slice(0, 25) + "…" : v} />
                 <Tooltip contentStyle={{ borderRadius: 8, border: "1px solid #DAD6C8", fontSize: 13 }} formatter={(v) => [v, "Permisos"]} />
                 <Bar dataKey="cantidad" fill="#D85A30" radius={[0, 4, 4, 0]} maxBarSize={16} />
               </BarChart>
@@ -348,6 +448,57 @@ export default function App() {
             </div>
           </Section>
         )}
+
+        <Section title="Resumen por persona" subtitle="Selecciona una persona para ver su historial completo, todos los años" style={{ marginTop: 24 }}>
+          <select
+            value={personaSel}
+            onChange={(e) => setPersonaSel(e.target.value)}
+            style={{ padding: "8px 12px", borderRadius: 6, border: "1px solid #DAD6C8", fontSize: 13, background: "#FFFFFF", color: "#1E2A38", colorScheme: "light", marginBottom: 16, minWidth: 240 }}
+          >
+            <option value="">— Selecciona una persona —</option>
+            {personasDisponibles.map(n => <option key={n} value={n}>{n}</option>)}
+          </select>
+
+          {resumenPersona && (
+            <>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12, marginBottom: 20 }}>
+                <MiniStat label="Total permisos" value={resumenPersona.total} color="#0F6E56" />
+                <MiniStat label="Total horas" value={resumenPersona.totalHoras} color="#0F6E56" />
+              </div>
+
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: "#6B6858", marginBottom: 8 }}>Permisos por año</div>
+                  <ResponsiveContainer width="100%" height={220}>
+                    <BarChart data={resumenPersona.porAnio} margin={{ top: 8, right: 8, left: -12, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#E5E1D5" vertical={false} />
+                      <XAxis dataKey="anio" tick={{ fontSize: 12, fill: "#6B6858" }} axisLine={{ stroke: "#DAD6C8" }} tickLine={false} />
+                      <YAxis tick={{ fontSize: 12, fill: "#6B6858" }} axisLine={false} tickLine={false} allowDecimals={false} />
+                      <Tooltip contentStyle={{ borderRadius: 8, border: "1px solid #DAD6C8", fontSize: 13 }} formatter={(v) => [v, "Permisos"]} />
+                      <Bar dataKey="cantidad" fill="#0F6E56" radius={[4, 4, 0, 0]} maxBarSize={50} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: "#6B6858", marginBottom: 8 }}>Por tipo de permiso</div>
+                  <ResponsiveContainer width="100%" height={220}>
+                    <BarChart data={resumenPersona.porConcepto} layout="vertical" margin={{ top: 8, right: 24, left: 8, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#E5E1D5" horizontal={false} />
+                      <XAxis type="number" tick={{ fontSize: 12, fill: "#6B6858" }} axisLine={false} tickLine={false} allowDecimals={false} />
+                      <YAxis dataKey="concepto" type="category" width={100} tick={{ fontSize: 12, fill: "#1E2A38" }} axisLine={false} tickLine={false} />
+                      <Tooltip contentStyle={{ borderRadius: 8, border: "1px solid #DAD6C8", fontSize: 13 }} formatter={(v) => [v, "Permisos"]} />
+                      <Bar dataKey="cantidad" radius={[0, 4, 4, 0]} maxBarSize={20}>
+                        {resumenPersona.porConcepto.map((entry, i) => (
+                          <Cell key={i} fill={CONCEPT_COLORS[entry.concepto] || FALLBACK_COLOR} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            </>
+          )}
+        </Section>
 
         <Section title="Consulta por persona" subtitle="Escribe un nombre para ver su historial en el período seleccionado" style={{ marginTop: 24 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8, background: "#FFFFFF", border: "1px solid #DAD6C8", borderRadius: 6, padding: "8px 12px", marginBottom: 14 }}>
