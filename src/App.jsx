@@ -1,9 +1,8 @@
 import { useMemo, useState } from "react";
-import * as XLSX from "xlsx";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, Legend,
 } from "recharts";
-import { Clock, Users, FileText, TrendingUp, Search, RotateCcw, Download, Filter } from "lucide-react";
+import { Clock, Users, FileText, TrendingUp, Search, RotateCcw, Printer, Filter } from "lucide-react";
 import FileUploader from "./components/FileUploader";
 
 const MESES = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
@@ -43,34 +42,8 @@ export default function App() {
     setBusqueda("");
   }
 
-  function exportarExcel() {
-    const wb = XLSX.utils.book_new();
-
-    const wsResumen = XLSX.utils.json_to_sheet([
-      { Métrica: "Total permisos", Valor: kpis.totalPermisos },
-      { Métrica: "Horas totales", Valor: Number(kpis.totalHoras.toFixed(1)) },
-      { Métrica: "Personas con permisos", Valor: kpis.personas },
-      { Métrica: "Promedio por persona", Valor: Number(kpis.promedio.toFixed(1)) },
-    ]);
-    XLSX.utils.book_append_sheet(wb, wsResumen, "Resumen");
-
-    const wsConcepto = XLSX.utils.json_to_sheet(
-      porConcepto.map(c => ({ Concepto: c.concepto, Permisos: c.cantidad }))
-    );
-    XLSX.utils.book_append_sheet(wb, wsConcepto, "Por concepto");
-
-    const wsDetalle = XLSX.utils.json_to_sheet(
-      filtrado.map(r => ({
-        Fecha: r.fecha,
-        Nombre: r.nombre,
-        Concepto: r.concepto,
-        Horas: r.tiempoMin != null ? Number((r.tiempoMin / 60).toFixed(2)) : null,
-      }))
-    );
-    XLSX.utils.book_append_sheet(wb, wsDetalle, "Detalle");
-
-    const sufijo = `${anioSel}_${conceptoSel}`.replace(/\s+/g, "_");
-    XLSX.writeFile(wb, `permisos_${sufijo}.xlsx`);
+  function descargarPDF() {
+    window.print();
   }
 
   const anios = useMemo(
@@ -283,7 +256,7 @@ export default function App() {
               Panel de ausentismo
             </h1>
           </div>
-          <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
+          <div className="no-print" style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
             {["Todos", ...anios].map(a => (
               <button
                 key={a}
@@ -300,15 +273,17 @@ export default function App() {
               </button>
             ))}
             <button
-              onClick={exportarExcel}
-              title="Exportar a Excel"
+              onClick={descargarPDF}
+              title="Descargar como PDF"
+              className="no-print"
               style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 12px", borderRadius: 6, border: "1px solid #0F6E56", background: "#0F6E56", color: "#FFFFFF", fontSize: 13, cursor: "pointer" }}
             >
-              <Download size={14} /> Exportar
+              <Printer size={14} /> Descargar PDF
             </button>
             <button
               onClick={reiniciar}
               title="Cargar otro archivo"
+              className="no-print"
               style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 12px", borderRadius: 6, border: "1px solid #DAD6C8", background: "#FFFFFF", color: "#6B6858", fontSize: 13, cursor: "pointer" }}
             >
               <RotateCcw size={14} /> Otro archivo
@@ -316,7 +291,7 @@ export default function App() {
           </div>
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 20 }}>
+        <div className="no-print" style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 20 }}>
           <Filter size={14} color="#6B6858" />
           <span style={{ fontSize: 13, color: "#6B6858", fontWeight: 600 }}>Concepto:</span>
           {["Todos", ...conceptosDisponibles].map(c => (
@@ -483,6 +458,7 @@ export default function App() {
           style={{ marginTop: 24 }}
         >
           <select
+            className="no-print"
             value={personaSel}
             onChange={(e) => setPersonaSel(e.target.value)}
             style={{ padding: "8px 12px", borderRadius: 6, border: "1px solid #DAD6C8", fontSize: 13, background: "#FFFFFF", color: "#1E2A38", colorScheme: "light", marginBottom: 16, minWidth: 240 }}
@@ -545,7 +521,7 @@ export default function App() {
         </Section>
 
         <Section title="Consulta por persona" subtitle="Escribe un nombre para ver su historial en el período seleccionado" style={{ marginTop: 24 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, background: "#FFFFFF", border: "1px solid #DAD6C8", borderRadius: 6, padding: "8px 12px", marginBottom: 14 }}>
+          <div className="no-print" style={{ display: "flex", alignItems: "center", gap: 8, background: "#FFFFFF", border: "1px solid #DAD6C8", borderRadius: 6, padding: "8px 12px", marginBottom: 14 }}>
             <Search size={16} color="#6B6858" />
             <input
               value={busqueda}

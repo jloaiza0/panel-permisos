@@ -17,7 +17,7 @@
 
   font: 18px/145% var(--sans);
   letter-spacing: 0.18px;
-  color-scheme: light;
+  color-scheme: light dark;
   color: var(--text);
   background: var(--bg);
   font-synthesis: none;
@@ -53,9 +53,16 @@
 body {
   margin: 0;
 }
+
 select, option {
   background-color: #1E2A38 !important;
   color: #FFFFFF !important;
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
 }
 
 #root {
