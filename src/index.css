@@ -63,6 +63,15 @@ select, option {
   .no-print {
     display: none !important;
   }
+  @page {
+    size: A4 landscape;
+    margin: 10mm;
+  }
+  body, #root, * {
+    width: auto !important;
+    max-width: 100% !important;
+    overflow: visible !important;
+  }
 }
 
 #root {
