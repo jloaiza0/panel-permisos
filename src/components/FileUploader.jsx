@@ -19,13 +19,9 @@ export default function FileUploader({ onDatosCargados }) {
     setCargando(true);
     try {
       const registros = await parseExcel(file);
-      if (registros.length === 0) {
-        setError("No se encontraron registros en el archivo");
-      } else {
-        onDatosCargados(registros, file.name);
-      }
+      onDatosCargados(registros, file.name);
     } catch (e) {
-      setError("No se pudo leer el archivo. Verifica que sea el formato correcto.");
+      setError(e.message || "No se pudo leer el archivo. Verifica que sea el formato correcto.");
     } finally {
       setCargando(false);
     }

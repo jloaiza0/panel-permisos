@@ -38,6 +38,31 @@ function excelFechaAPartes(valor) {
   return { iso, anio: y, mes: MESES_ABREV[m - 1] };
 }
 
+function headerIncluye(headers, palabra) {
+  return headers.some(h => h.includes(palabra));
+}
+
+/**
+ * Verifica que el Excel tenga la estructura mínima esperada.
+ * Lanza un error con mensaje claro si no la tiene.
+ */
+function validarEstructura(filas) {
+  if (!filas || filas.length < 2) {
+    throw new Error("El archivo está vacío o no tiene registros.");
+  }
+
+  const headers = (filas[0] || []).map(h => (h || "").toString().trim().toLowerCase());
+  const tieneFecha = headerIncluye(headers, "fecha");
+  const tieneNombre = headerIncluye(headers, "nombre");
+  const tieneConcepto = headerIncluye(headers, "conc"); // tolerante a "concepto", "concpeto", etc.
+
+  if (!tieneFecha || !tieneNombre || !tieneConcepto) {
+    throw new Error(
+      "El archivo no tiene el formato esperado. Debe incluir columnas de Fecha, Nombre y Concepto."
+    );
+  }
+}
+
 /**
  * Lee un archivo Excel (File del input) y devuelve un arreglo de registros
  * normalizados: { fecha, anio, mes, nombre, concepto, tiempoMin }
@@ -49,13 +74,17 @@ export async function parseExcel(file) {
   const hoja = workbook.Sheets[workbook.SheetNames[0]];
   const filas = XLSX.utils.sheet_to_json(hoja, { header: 1, defval: null });
 
+  validarEstructura(filas);
+
   // Fila 0 = encabezados, se ignora
   const registros = [];
+  let filasConDatos = 0;
   for (let i = 1; i < filas.length; i++) {
     const fila = filas[i];
     const [fecha, , , nombre, concepto, , horaInicio, horaFin, tiempo] = fila;
 
     if (!fecha || !nombre) continue;
+    filasConDatos++;
 
     const partes = excelFechaAPartes(fecha);
     if (!partes) continue;
@@ -68,6 +97,19 @@ export async function parseExcel(file) {
       concepto: normalizarConcepto(concepto),
       tiempoMin: tiempoAMinutos(tiempo),
     });
+  }
+
+  if (registros.length === 0) {
+    throw new Error(
+      "No se encontraron registros válidos. Verifica que la columna de Fecha tenga fechas reales."
+    );
+  }
+
+  // Si más de la mitad de filas con datos se descartaron por fecha inválida, algo está mal
+  if (filasConDatos > 0 && registros.length / filasConDatos < 0.5) {
+    throw new Error(
+      "Muchas filas tienen fechas inválidas. Revisa el formato de la columna Fecha en el Excel."
+    );
   }
 
   return registros;
