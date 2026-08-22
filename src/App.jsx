@@ -192,14 +192,41 @@ export default function App() {
 
   const resumenPersona = useMemo(() => {
     if (!datos || !personaSel) return null;
-    const regs = datos.filter(r => r.nombre === personaSel);
-    const anios = Array.from(new Set(regs.map(r => r.anio))).sort();
 
-    const porAnioPersona = anios.map(a => {
-      const regsAnio = regs.filter(r => r.anio === a);
-      const minutos = regsAnio.reduce((s, r) => s + (r.tiempoMin || 0), 0);
-      return { anio: a, cantidad: regsAnio.length, horas: Number((minutos / 60).toFixed(1)) };
-    });
+    const conceptoMatch = (r) => conceptoSel === "Todos" || r.concepto === conceptoSel;
+
+    if (anioSel === "Todos") {
+      // Vista general: desglose por año
+      const regs = datos.filter(r => r.nombre === personaSel && conceptoMatch(r));
+      const anios = Array.from(new Set(regs.map(r => r.anio))).sort();
+      const porAnioPersona = anios.map(a => {
+        const regsAnio = regs.filter(r => r.anio === a);
+        const minutos = regsAnio.reduce((s, r) => s + (r.tiempoMin || 0), 0);
+        return { anio: a, cantidad: regsAnio.length, horas: Number((minutos / 60).toFixed(1)) };
+      });
+
+      const conceptoMap = {};
+      regs.forEach(r => { conceptoMap[r.concepto] = (conceptoMap[r.concepto] || 0) + 1; });
+      const porConceptoPersona = Object.entries(conceptoMap)
+        .map(([concepto, cantidad]) => ({ concepto, cantidad }))
+        .sort((a, b) => b.cantidad - a.cantidad);
+
+      const totalMin = regs.reduce((s, r) => s + (r.tiempoMin || 0), 0);
+      return {
+        modo: "anio",
+        total: regs.length,
+        totalHoras: Number((totalMin / 60).toFixed(1)),
+        porAnio: porAnioPersona,
+        porConcepto: porConceptoPersona,
+      };
+    }
+
+    // Vista de un año específico: desglose por mes
+    const regs = datos.filter(r => r.nombre === personaSel && r.anio === anioSel && conceptoMatch(r));
+    const mesMap = {};
+    MESES.forEach(m => { mesMap[m] = { mes: m, cantidad: 0 }; });
+    regs.forEach(r => { if (mesMap[r.mes]) mesMap[r.mes].cantidad += 1; });
+    const porMesPersona = MESES.map(m => mesMap[m]);
 
     const conceptoMap = {};
     regs.forEach(r => { conceptoMap[r.concepto] = (conceptoMap[r.concepto] || 0) + 1; });
@@ -209,12 +236,13 @@ export default function App() {
 
     const totalMin = regs.reduce((s, r) => s + (r.tiempoMin || 0), 0);
     return {
+      modo: "mes",
       total: regs.length,
       totalHoras: Number((totalMin / 60).toFixed(1)),
-      porAnio: porAnioPersona,
+      porMes: porMesPersona,
       porConcepto: porConceptoPersona,
     };
-  }, [datos, personaSel]);
+  }, [datos, personaSel, anioSel, conceptoSel]);
 
   const tablaBusqueda = useMemo(() => {
     if (!busqueda.trim()) return [];
@@ -449,7 +477,11 @@ export default function App() {
           </Section>
         )}
 
-        <Section title="Resumen por persona" subtitle="Selecciona una persona para ver su historial completo, todos los años" style={{ marginTop: 24 }}>
+        <Section
+          title="Resumen por persona"
+          subtitle={anioSel === "Todos" ? "Todos los años combinados" : `Desglosado por mes — año ${anioSel}`}
+          style={{ marginTop: 24 }}
+        >
           <select
             value={personaSel}
             onChange={(e) => setPersonaSel(e.target.value)}
@@ -468,15 +500,27 @@ export default function App() {
 
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
                 <div>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: "#6B6858", marginBottom: 8 }}>Permisos por año</div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: "#6B6858", marginBottom: 8 }}>
+                    {resumenPersona.modo === "anio" ? "Permisos por año" : "Permisos por mes"}
+                  </div>
                   <ResponsiveContainer width="100%" height={220}>
-                    <BarChart data={resumenPersona.porAnio} margin={{ top: 8, right: 8, left: -12, bottom: 0 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#E5E1D5" vertical={false} />
-                      <XAxis dataKey="anio" tick={{ fontSize: 12, fill: "#6B6858" }} axisLine={{ stroke: "#DAD6C8" }} tickLine={false} />
-                      <YAxis tick={{ fontSize: 12, fill: "#6B6858" }} axisLine={false} tickLine={false} allowDecimals={false} />
-                      <Tooltip contentStyle={{ borderRadius: 8, border: "1px solid #DAD6C8", fontSize: 13 }} formatter={(v) => [v, "Permisos"]} />
-                      <Bar dataKey="cantidad" fill="#0F6E56" radius={[4, 4, 0, 0]} maxBarSize={50} />
-                    </BarChart>
+                    {resumenPersona.modo === "anio" ? (
+                      <BarChart data={resumenPersona.porAnio} margin={{ top: 8, right: 8, left: -12, bottom: 0 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#E5E1D5" vertical={false} />
+                        <XAxis dataKey="anio" tick={{ fontSize: 12, fill: "#6B6858" }} axisLine={{ stroke: "#DAD6C8" }} tickLine={false} />
+                        <YAxis tick={{ fontSize: 12, fill: "#6B6858" }} axisLine={false} tickLine={false} allowDecimals={false} />
+                        <Tooltip contentStyle={{ borderRadius: 8, border: "1px solid #DAD6C8", fontSize: 13 }} formatter={(v) => [v, "Permisos"]} />
+                        <Bar dataKey="cantidad" fill="#0F6E56" radius={[4, 4, 0, 0]} maxBarSize={50} />
+                      </BarChart>
+                    ) : (
+                      <BarChart data={resumenPersona.porMes} margin={{ top: 8, right: 8, left: -12, bottom: 0 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#E5E1D5" vertical={false} />
+                        <XAxis dataKey="mes" tick={{ fontSize: 12, fill: "#6B6858" }} axisLine={{ stroke: "#DAD6C8" }} tickLine={false} />
+                        <YAxis tick={{ fontSize: 12, fill: "#6B6858" }} axisLine={false} tickLine={false} allowDecimals={false} />
+                        <Tooltip contentStyle={{ borderRadius: 8, border: "1px solid #DAD6C8", fontSize: 13 }} formatter={(v) => [v, "Permisos"]} />
+                        <Bar dataKey="cantidad" fill="#0F6E56" radius={[4, 4, 0, 0]} maxBarSize={26} />
+                      </BarChart>
+                    )}
                   </ResponsiveContainer>
                 </div>
                 <div>
