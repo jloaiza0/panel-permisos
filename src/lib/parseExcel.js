@@ -39,26 +39,73 @@ function excelFechaAPartes(valor) {
 }
 
 function headerIncluye(headers, palabra) {
-  return headers.some(h => h.includes(palabra));
+  return headers.findIndex(h => h.includes(palabra));
 }
 
 /**
- * Verifica que el Excel tenga la estructura mínima esperada.
- * Lanza un error con mensaje claro si no la tiene.
+ * Ubica el índice de cada columna requerida buscando por su nombre real
+ * en el encabezado (no por posición fija). Lanza error si falta alguna
+ * o si hay encabezados ambiguos/duplicados.
  */
-function validarEstructura(filas) {
+function ubicarColumnas(filas) {
   if (!filas || filas.length < 2) {
     throw new Error("El archivo está vacío o no tiene registros.");
   }
 
   const headers = (filas[0] || []).map(h => (h || "").toString().trim().toLowerCase());
-  const tieneFecha = headerIncluye(headers, "fecha");
-  const tieneNombre = headerIncluye(headers, "nombre");
-  const tieneConcepto = headerIncluye(headers, "conc"); // tolerante a "concepto", "concpeto", etc.
 
-  if (!tieneFecha || !tieneNombre || !tieneConcepto) {
+  const idxFecha = headerIncluye(headers, "fecha");
+  const idxNombre = headerIncluye(headers, "nombre");
+  const idxConcepto = headerIncluye(headers, "conc"); // tolerante a "concepto", "concpeto", etc.
+  const idxTiempo = headerIncluye(headers, "tiempo");
+
+  const faltantes = [];
+  if (idxFecha === -1) faltantes.push("Fecha");
+  if (idxNombre === -1) faltantes.push("Nombre");
+  if (idxConcepto === -1) faltantes.push("Concepto");
+
+  if (faltantes.length > 0) {
     throw new Error(
-      "El archivo no tiene el formato esperado. Debe incluir columnas de Fecha, Nombre y Concepto."
+      `El archivo no tiene el formato esperado. Faltan las columnas: ${faltantes.join(", ")}.`
+    );
+  }
+
+  return { idxFecha, idxNombre, idxConcepto, idxTiempo };
+}
+
+/**
+ * Revisa una muestra de filas para confirmar que el CONTENIDO de cada
+ * columna corresponde a lo que dice su encabezado (no solo el nombre).
+ */
+function validarContenido(filas, cols) {
+  const muestra = filas.slice(1, Math.min(filas.length, 21)); // hasta 20 filas de muestra
+  if (muestra.length === 0) {
+    throw new Error("El archivo no tiene filas de datos para validar.");
+  }
+
+  let fechasValidas = 0;
+  let nombresValidos = 0;
+
+  muestra.forEach(fila => {
+    const valFecha = fila[cols.idxFecha];
+    const valNombre = fila[cols.idxNombre];
+
+    if (valFecha instanceof Date || (typeof valFecha === "number" && valFecha > 20000 && valFecha < 90000)) {
+      fechasValidas++;
+    }
+    if (typeof valNombre === "string" && valNombre.trim().length >= 3 && /[a-zA-Záéíóúñ]/.test(valNombre)) {
+      nombresValidos++;
+    }
+  });
+
+  if (fechasValidas / muestra.length < 0.7) {
+    throw new Error(
+      "La columna de Fecha no contiene fechas válidas. Verifica que el archivo sea el correcto."
+    );
+  }
+  if (nombresValidos / muestra.length < 0.7) {
+    throw new Error(
+      "La columna de Nombre no contiene nombres de personas válidos. Verifica que el archivo sea el correcto."
     );
   }
 }
@@ -74,14 +121,18 @@ export async function parseExcel(file) {
   const hoja = workbook.Sheets[workbook.SheetNames[0]];
   const filas = XLSX.utils.sheet_to_json(hoja, { header: 1, defval: null });
 
-  validarEstructura(filas);
+  const cols = ubicarColumnas(filas);
+  validarContenido(filas, cols);
 
   // Fila 0 = encabezados, se ignora
   const registros = [];
   let filasConDatos = 0;
   for (let i = 1; i < filas.length; i++) {
     const fila = filas[i];
-    const [fecha, , , nombre, concepto, , horaInicio, horaFin, tiempo] = fila;
+    const fecha = fila[cols.idxFecha];
+    const nombre = fila[cols.idxNombre];
+    const concepto = fila[cols.idxConcepto];
+    const tiempo = cols.idxTiempo !== -1 ? fila[cols.idxTiempo] : null;
 
     if (!fecha || !nombre) continue;
     filasConDatos++;
