@@ -7,11 +7,11 @@ import FileUploader from "./components/FileUploader";
 
 const MESES = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
 const CONCEPT_COLORS = {
-  "Cita médica": "#0F6E56",
-  "Personal": "#378ADD",
-  "Estudio": "#BA7517",
-  "Compensatorio": "#D85A30",
-  "C Votacion": "#7F77DD",
+  "CITA MÉDICA": "#0F6E56",
+  "PERSONAL": "#378ADD",
+  "ESTUDIO": "#BA7517",
+  "COMPENSATORIO": "#D85A30",
+  "C VOTACION": "#7F77DD",
 };
 const FALLBACK_COLOR = "#888780";
 
