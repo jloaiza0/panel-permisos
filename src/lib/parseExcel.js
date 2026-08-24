@@ -14,9 +14,7 @@ function tiempoAMinutos(valor) {
 }
 
 function normalizarConcepto(valor) {
-  const c = (valor || "").toString().trim();
-  if (c.toLowerCase() === "compensatorio") return "Compensatorio";
-  return c;
+  return (valor || "").toString().trim().toUpperCase();
 }
 
 const MESES_ABREV = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
