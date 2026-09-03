@@ -15,6 +15,11 @@ export default function FileUploader({ onDatosCargados }) {
       setError("El archivo debe ser .xlsx o .xls");
       return;
     }
+    const LIMITE_MB = 10;
+    if (file.size > LIMITE_MB * 1024 * 1024) {
+      setError(`El archivo pesa demasiado (máximo ${LIMITE_MB}MB). Verifica que sea el archivo correcto.`);
+      return;
+    }
     setError(null);
     setCargando(true);
     try {

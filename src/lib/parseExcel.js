@@ -1,4 +1,10 @@
-import * as XLSX from "xlsx";
+// xlsx pesa bastante — se carga solo cuando el usuario realmente sube un archivo,
+// no al abrir la página. Así la pantalla inicial arranca más rápido.
+let xlsxPromise = null;
+function cargarXLSX() {
+  if (!xlsxPromise) xlsxPromise = import("xlsx");
+  return xlsxPromise;
+}
 
 // Convierte un valor de tiempo de Excel (fracción de día u objeto Date) a minutos
 function tiempoAMinutos(valor) {
@@ -19,7 +25,7 @@ function normalizarConcepto(valor) {
 
 const MESES_ABREV = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
 
-function excelFechaAPartes(valor) {
+function excelFechaAPartes(valor, XLSX) {
   let y, m, d;
   if (valor instanceof Date) {
     y = valor.getFullYear();
@@ -113,6 +119,7 @@ function validarContenido(filas, cols) {
  * normalizados: { fecha, anio, mes, nombre, concepto, tiempoMin }
  */
 export async function parseExcel(file) {
+  const XLSX = await cargarXLSX();
   const buffer = await file.arrayBuffer();
   const workbook = XLSX.read(buffer, { type: "array", cellDates: true });
 
@@ -135,7 +142,7 @@ export async function parseExcel(file) {
     if (!fecha || !nombre) continue;
     filasConDatos++;
 
-    const partes = excelFechaAPartes(fecha);
+    const partes = excelFechaAPartes(fecha, XLSX);
     if (!partes) continue;
 
     registros.push({
