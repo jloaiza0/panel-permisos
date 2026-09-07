@@ -25,12 +25,15 @@ export default function App() {
   const [nombreArchivo, setNombreArchivo] = useState("");
   const [anioSel, setAnioSel] = useState("Todos");
   const [conceptoSel, setConceptoSel] = useState("Todos");
+  const [mesSel, setMesSel] = useState("Todos");
   const [busqueda, setBusqueda] = useState("");
 
   function handleDatosCargados(registros, nombreArchivo) {
     setDatos(registros);
     setNombreArchivo(nombreArchivo);
     setAnioSel("Todos");
+    setConceptoSel("Todos");
+    setMesSel("Todos");
     const anios = Array.from(new Set(registros.map(r => r.anio))).sort();
     setAnioA(anios[anios.length - 2] ?? anios[0] ?? null);
     setAnioB(anios[anios.length - 1] ?? null);
@@ -55,9 +58,10 @@ export default function App() {
     if (!datos) return [];
     return datos.filter(r =>
       (anioSel === "Todos" || r.anio === anioSel) &&
-      (conceptoSel === "Todos" || r.concepto === conceptoSel)
+      (conceptoSel === "Todos" || r.concepto === conceptoSel) &&
+      (mesSel === "Todos" || r.mes === mesSel)
     );
-  }, [datos, anioSel, conceptoSel]);
+  }, [datos, anioSel, conceptoSel, mesSel]);
 
   const conceptosDisponibles = useMemo(
     () => (datos ? Array.from(new Set(datos.map(r => r.concepto))).sort() : []),
@@ -311,6 +315,26 @@ export default function App() {
           ))}
         </div>
 
+        <div className="no-print" style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 20 }}>
+          <Filter size={14} color="#6B6858" />
+          <span style={{ fontSize: 13, color: "#6B6858", fontWeight: 600 }}>Mes:</span>
+          {["Todos", ...MESES].map(m => (
+            <button
+              key={m}
+              onClick={() => setMesSel(m)}
+              style={{
+                padding: "6px 12px", borderRadius: 6,
+                border: "1px solid " + (mesSel === m ? "#0F6E56" : "#DAD6C8"),
+                background: mesSel === m ? "#0F6E56" : "#FFFFFF",
+                color: mesSel === m ? "#FFFFFF" : "#1E2A38",
+                fontSize: 12, fontWeight: 600, cursor: "pointer",
+              }}
+            >
+              {m}
+            </button>
+          ))}
+        </div>
+
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 14, marginBottom: 32 }}>
           <KpiCard icon={<FileText size={18} />} label="Total permisos" value={kpis.totalPermisos.toLocaleString("es-CO")} />
           <KpiCard icon={<Clock size={18} />} label="Horas totales" value={kpis.totalHoras.toLocaleString("es-CO", { maximumFractionDigits: 0 })} />
@@ -331,7 +355,7 @@ export default function App() {
         </Section>
 
         <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 20, marginTop: 24 }}>
-          <Section title="Por tipo de permiso" subtitle="Distribución de conceptos">
+          <Section title="Por tipo de permiso" subtitle={mesSel === "Todos" ? "Distribución de conceptos" : `Distribución de conceptos — ${mesSel}`}>
             <ResponsiveContainer width="100%" height={260}>
               <BarChart data={porConcepto} layout="vertical" margin={{ top: 8, right: 24, left: 8, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#E5E1D5" horizontal={false} />
@@ -347,7 +371,7 @@ export default function App() {
             </ResponsiveContainer>
           </Section>
 
-          <Section title="Top 10 personas" subtitle="Mayor número de permisos">
+          <Section title="Top 10 personas" subtitle={mesSel === "Todos" ? "Mayor número de permisos" : `Mayor número de permisos — ${mesSel}`}>
             <ResponsiveContainer width="100%" height={260}>
               <BarChart data={topPersonas} layout="vertical" margin={{ top: 8, right: 24, left: 8, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#E5E1D5" horizontal={false} />
