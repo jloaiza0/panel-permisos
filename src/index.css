@@ -1,35 +1,77 @@
+/* ============================================================================
+   index.css
+   ----------------------------------------------------------------------------
+   ¿PARA QUÉ SIRVE ESTE ARCHIVO?
+
+   Son los estilos GLOBALES de toda la app — cosas que aplican en cualquier
+   parte, sin importar en qué componente estés. Cosas como el color de fondo
+   por defecto, el tamaño de letra base, o las reglas de impresión.
+
+   OJO — ESTO ES IMPORTANTE PARA ENTENDER EL ARCHIVO:
+   Gran parte de este archivo (las variables de --text, --accent, los
+   estilos de h1/h2/code, el modo oscuro automático) es la plantilla que
+   trae Vite POR DEFECTO al crear un proyecto nuevo — NO fue diseñada a
+   propósito para tu dashboard. Tu dashboard, en la práctica, casi no usa
+   nada de esto, porque en App.jsx casi todos los colores y tamaños de
+   letra se definen directamente en cada componente (con "style={{...}}"),
+   no aquí. Lo que SÍ es tuyo y realmente importa son 3 bloques concretos,
+   que marco más abajo con "★ ESTO SÍ LO AGREGAMOS NOSOTROS ★".
+   ============================================================================ */
+
+
+/* ---------------------------------------------------------------------------
+   BLOQUE DE PLANTILLA (heredado de Vite, poco usado por tu dashboard)
+   --------------------------------------------------------------------------- */
+
+/* ":root" es un selector especial que representa "todo el documento".
+   Definir variables aquí (los nombres que empiezan con "--") es como crear
+   una lista de colores/tamaños con nombre, para no repetir el mismo código
+   de color muchas veces. Por ejemplo, "var(--text)" en cualquier parte del
+   CSS usa automáticamente el valor de --text de aquí abajo. */
 :root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
+  --text: #6b6375;       /* color de texto normal, modo claro */
+  --text-h: #08060d;     /* color de texto para encabezados (h1, h2) */
+  --bg: #fff;            /* color de fondo, modo claro */
   --border: #e5e4e7;
   --code-bg: #f4f3ec;
-  --accent: #aa3bff;
+  --accent: #aa3bff;     /* color "de marca" de la plantilla original (morado) — no se usa en tu dashboard */
   --accent-bg: rgba(170, 59, 255, 0.1);
   --accent-border: rgba(170, 59, 255, 0.5);
   --social-bg: rgba(244, 243, 236, 0.5);
   --shadow:
     rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
 
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --mono: ui-monospace, Consolas, monospace;
+  --sans: system-ui, 'Segoe UI', Roboto, sans-serif; /* fuente de texto normal */
+  --heading: system-ui, 'Segoe UI', Roboto, sans-serif; /* fuente de títulos */
+  --mono: ui-monospace, Consolas, monospace; /* fuente de ancho fijo, para código */
 
-  font: 18px/145% var(--sans);
+  font: 18px/145% var(--sans); /* tamaño de letra base (18px) y espacio entre líneas (145%) */
   letter-spacing: 0.18px;
-  color-scheme: light dark;
+  color-scheme: light dark; /* le dice al navegador "puedes mostrar controles nativos en claro U oscuro, según prefiera el usuario" */
   color: var(--text);
   background: var(--bg);
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  font-synthesis: none; /* evita que el navegador "invente" negritas/cursivas si la fuente no las trae */
+  text-rendering: optimizeLegibility; /* pide al navegador priorizar que el texto se vea nítido */
+  -webkit-font-smoothing: antialiased;    /* suavizado de fuente en Chrome/Safari */
+  -moz-osx-font-smoothing: grayscale;     /* suavizado de fuente en Firefox/Mac */
 
+  /* En pantallas angostas (celulares/tablets, menos de 1024px de ancho),
+     el texto base se reduce un poco. */
   @media (max-width: 1024px) {
     font-size: 16px;
   }
 }
 
+/* Esta regla activa un SEGUNDO juego de colores automáticamente si el
+   sistema operativo del usuario tiene el "modo oscuro" activado — por
+   ejemplo, esto era justamente lo que causaba el problema de los
+   desplegables invisibles que tuvimos antes (Windows en modo oscuro
+   forzaba estos colores en los <select> nativos).
+   Como tu dashboard define sus propios colores en cada componente, esta
+   sección prácticamente no se nota en tu app — pero sigue existiendo
+   "por debajo" y puede afectar controles nativos del navegador
+   (como los <select>), que es justo lo que arreglamos manualmente más
+   abajo con la regla "select, option {...}". */
 @media (prefers-color-scheme: dark) {
   :root {
     --text: #9ca3af;
@@ -50,23 +92,56 @@
   }
 }
 
+
+/* ---------------------------------------------------------------------------
+   ★ ESTO SÍ LO AGREGAMOS NOSOTROS ★  (lo importante de este archivo)
+   --------------------------------------------------------------------------- */
+
+/* Quita el margen por defecto que los navegadores le ponen al <body> —
+   sin esto, quedaría un pequeño espacio en blanco alrededor de toda la
+   página que rompería el diseño de "borde a borde" del dashboard. */
 body {
   margin: 0;
 }
 
+/* SOLUCIÓN al problema de los desplegables (<select>) invisibles en modo
+   oscuro de Windows. En vez de pelear contra el navegador tratando de
+   ponerlos en modo claro (lo intentamos y no funcionó de forma
+   confiable), aprovechamos que Windows forzaba el TEXTO a blanco sin
+   importar qué le pusiéramos — así que en vez de pelear, le pusimos
+   fondo OSCURO a propósito, para que ese texto blanco forzado sí se
+   pueda leer. El "!important" es necesario para ganarle la pelea a los
+   estilos que el navegador intenta imponer por su cuenta en estos
+   controles nativos. */
 select, option {
   background-color: #1E2A38 !important;
   color: #FFFFFF !important;
 }
 
+/* Reglas que SOLO aplican cuando se está IMPRIMIENDO la página (o
+   generando el PDF con el botón "Descargar PDF", que internamente usa
+   window.print()). En pantalla normal, todo esto se ignora. */
 @media print {
+
+  /* Cualquier elemento con className="no-print" en el JSX (los botones
+     de filtro, el buscador, los selects, etc.) desaparece al imprimir —
+     así el PDF sale limpio, solo con las gráficas y datos, sin los
+     controles interactivos que no tendría sentido tener en papel. */
   .no-print {
     display: none !important;
   }
+
+  /* Configura el tamaño de la "hoja" del PDF: A4 en horizontal
+     (landscape), con 10mm de margen en los bordes. Esto se agregó
+     porque las gráficas anchas se cortaban al imprimir en vertical. */
   @page {
     size: A4 landscape;
     margin: 10mm;
   }
+
+  /* Fuerza a que TODO el contenido (el "*" selecciona absolutamente
+     todos los elementos) se ajuste al ancho disponible de la hoja en
+     vez de mantener anchos fijos que se salgan del papel y se corten. */
   body, #root, * {
     width: auto !important;
     max-width: 100% !important;
@@ -74,12 +149,31 @@ select, option {
   }
 }
 
+/* El div con id="root" es donde React "engancha" toda tu aplicación (ver
+   main.jsx). Estas reglas hacen que ocupe el 100% del ancho disponible y
+   al menos toda la altura de la pantalla (100svh = "small viewport
+   height", una unidad pensada especialmente para que funcione bien en
+   celulares, donde la barra del navegador puede aparecer/desaparecer).
+   Antes, esta regla tenía un ancho FIJO de 1126px con bordes laterales
+   (leftover de la plantilla de Vite) — eso era justamente lo que
+   causaba las "franjas grises" a los lados en pantallas anchas que
+   corregimos. */
 #root {
   width: 100%;
   min-height: 100svh;
-  box-sizing: border-box;
+  box-sizing: border-box; /* hace que el padding/borde se cuenten DENTRO del ancho, no se sumen aparte */
 }
 
+
+/* ---------------------------------------------------------------------------
+   BLOQUE DE PLANTILLA (heredado de Vite, poco usado por tu dashboard)
+   --------------------------------------------------------------------------- */
+
+/* Estilos genéricos para títulos y párrafos. Tu dashboard define sus
+   propios tamaños de letra directamente en App.jsx (por ejemplo, el
+   "Panel de ausentismo" usa fontSize: 30 en línea), así que estas reglas
+   casi no se notan — pero seguirían aplicando a cualquier <h1>/<h2>/<p>
+   que NO tenga su propio estilo en línea. */
 h1,
 h2 {
   font-family: var(--heading);
@@ -109,6 +203,8 @@ p {
   margin: 0;
 }
 
+/* Estilo para bloques de código — tampoco se usa en tu dashboard actual
+   (no hay ningún <code> en App.jsx), es sobrante de la plantilla. */
 code,
 .counter {
   font-family: var(--mono);
