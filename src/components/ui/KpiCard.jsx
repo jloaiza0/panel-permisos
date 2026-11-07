@@ -1,9 +1,18 @@
 import { ArrowDownRight, ArrowUpRight } from "lucide-react";
 
-// Tarjeta grande de indicador (Total permisos, Horas totales, etc.).
-// "delta" (opcional) = variación contra el año anterior. Más permisos u
-// horas es PEOR (más ausentismo): subir se marca en rojo y bajar en verde,
-// siempre con flecha + texto, nunca solo con color.
+/**
+ * Tarjeta grande de indicador (Total permisos, Horas totales, etc.).
+ * "delta" (opcional) = variación contra el año anterior. Más permisos u
+ * horas es PEOR (más ausentismo): subir se marca en rojo y bajar en verde,
+ * siempre con flecha + texto, nunca solo con color.
+ *
+ * @param {{
+ *   icon?: import("react").ReactNode,
+ *   label: string,
+ *   value: string,
+ *   delta?: { pct: number, anio: number } | null,
+ * }} props
+ */
 export default function KpiCard({ icon, label, value, delta }) {
   const sube = delta && delta.pct > 0.05;
   const baja = delta && delta.pct < -0.05;

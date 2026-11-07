@@ -2,9 +2,9 @@
   // Revisión de tipos del JavaScript (npm run typecheck): TypeScript lee el
   // código y los comentarios JSDoc (@param, @returns) y avisa de errores
   // como pasar un texto donde va un número, sin tener que migrar a .ts.
-  // Se revisa en modo estricto la LÓGICA (cálculos, lector de Excel, hooks),
-  // que es donde un error de tipos produce datos incorrectos. Los
-  // componentes visuales los cubren el lint y las pruebas de interfaz.
+  // Se revisa TODO src/ en modo estricto: la lógica y también las props de
+  // cada componente y lo que se le pasa a las gráficas de Recharts. Las
+  // pruebas quedan fuera (las revisa Vitest al correrlas).
   "compilerOptions": {
     "target": "ES2022",
     "module": "ESNext",
@@ -21,6 +21,6 @@
     "noFallthroughCasesInSwitch": true,
     "resolveJsonModule": true
   },
-  "include": ["src/lib", "src/constants", "src/hooks", "src/vite-env.d.ts"],
+  "include": ["src"],
   "exclude": ["dist", "node_modules", "src/**/*.test.js", "src/**/*.test.jsx", "src/test"]
 }

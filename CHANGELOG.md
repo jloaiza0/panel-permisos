@@ -1,5 +1,21 @@
 # Cambios
 
+## 1.2.0 — 2026-11-07
+
+### Accesibilidad
+- Auditoría con axe-core (WCAG 2.2 AA) en navegador real, claro y oscuro, en
+  todos los estados: 0 problemas. Se corrigieron los dos que encontró:
+  - La zona de carga anunciaba un nombre distinto al texto visible (afectaba
+    el control por voz).
+  - La tabla de búsqueda tenía scroll pero no se podía enfocar con el teclado.
+- El enlace "Saltar a los resultados" ahora es lo primero que se alcanza con
+  Tab después del título.
+- Nueva prueba automática de accesibilidad (`src/a11y.test.jsx`) en el CI.
+
+### Calidad
+- La revisión de tipos estricta cubre ahora todo `src/`: props de cada
+  componente y lo que se pasa a las gráficas de Recharts.
+
 ## 1.1.0 — 2026-11-07
 
 ### Nuevo

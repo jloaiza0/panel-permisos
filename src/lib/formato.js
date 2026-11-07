@@ -6,8 +6,9 @@
 // ============================================================================
 import { MESES } from "../constants/meses.js";
 
-// 1946 → "1.946". Si no es número, lo devuelve tal cual.
-export const fmtNum = (/** @type {unknown} */ v) => (typeof v === "number" ? v.toLocaleString("es-CO") : v);
+// 1946 → "1.946". Si no es número, lo devuelve como texto.
+/** @param {unknown} v @returns {string} */
+export const fmtNum = (v) => (typeof v === "number" ? v.toLocaleString("es-CO") : String(v ?? ""));
 
 // Minutos → horas con máximo 1 decimal: 480 → "8", 450 → "7,5".
 export const fmtHoras = (/** @type {number} */ min) => (min / 60).toLocaleString("es-CO", { maximumFractionDigits: 1 });

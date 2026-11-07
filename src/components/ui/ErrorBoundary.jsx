@@ -28,12 +28,16 @@ import { Component } from "react";
 // de tu proyecto que usa una clase, porque la funcionalidad de "atrapar
 // errores" solo existe en componentes de clase — React no ofrece (todavía)
 // una forma de hacerlo con funciones.
+/**
+ * @extends {Component<{ children?: import("react").ReactNode }, { conError: boolean }>}
+ */
 export default class ErrorBoundary extends Component {
 
   // El CONSTRUCTOR es lo primero que se ejecuta al crear el componente.
   // Aquí se inicializa una "memoria" (this.state) con una bandera:
   //   conError: false  →  significa "por ahora todo bien, no ha pasado
   //                        ningún error".
+  /** @param {{ children?: import("react").ReactNode }} props */
   constructor(props) {
     super(props); // obligatorio: le pasa las props al componente padre (Component)
     this.state = { conError: false };
@@ -58,6 +62,7 @@ export default class ErrorBoundary extends Component {
   // de arriba). Aquí lo mandamos a la consola del navegador (F12 → Console)
   // para que tú, como desarrollador, puedas ver exactamente qué pasó si
   // alguien te reporta un problema.
+  /** @param {Error} error @param {import("react").ErrorInfo} info */
   componentDidCatch(error, info) {
     console.error("Error en la aplicación:", error, info);
   }

@@ -31,6 +31,7 @@ export default function ThemeToggle() {
   );
   const maskId = useId(); // id único para la máscara del SVG
 
+  /** @param {import("react").MouseEvent<HTMLButtonElement>} e */
   function cambiarTema(e) {
     const siguiente = tema === "dark" ? "light" : "dark";
 

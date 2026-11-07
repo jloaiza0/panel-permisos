@@ -5,7 +5,9 @@ import FileUploader from "./FileUploader.jsx";
 
 // jsdom no tiene DragEvent: un MouseEvent "dragleave" sí lleva relatedTarget.
 const salir = (haciaDonde) => new MouseEvent("dragleave", { bubbles: true, relatedTarget: haciaDonde });
-const zona = () => screen.getByRole("button", { name: "Seleccionar archivo Excel de permisos" });
+// Se busca por clase: al arrastrar, el texto (y su nombre accesible) cambia
+// a "Suelta el archivo para cargarlo".
+const zona = () => /** @type {HTMLElement} */ (document.querySelector(".dropzone"));
 
 describe("FileUploader", () => {
   it("se pinta al arrastrar encima y no parpadea al pasar sobre su contenido", () => {

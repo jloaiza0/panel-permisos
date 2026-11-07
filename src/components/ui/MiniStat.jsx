@@ -1,7 +1,11 @@
 import { fmtNum } from "../../lib/formato.js";
 
-// Estadística pequeña dentro de una tarjeta. Si recibe "color", un puntito
-// indica a qué año pertenece.
+/**
+ * Estadística pequeña dentro de una tarjeta. Si recibe "color", un puntito
+ * indica a qué año pertenece.
+ *
+ * @param {{ label: string, value: number, color?: string }} props
+ */
 export default function MiniStat({ label, value, color }) {
   return (
     <div>

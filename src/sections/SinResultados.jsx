@@ -3,6 +3,7 @@ import { TODOS } from "../lib/estadisticas.js";
 
 // Si los filtros no dejan ningún registro, en vez de gráficas vacías se
 // explica qué pasó y se ofrece quitar los filtros.
+/** @param {{ filtros: Filtros, onLimpiar: () => void }} props */
 export default function SinResultados({ filtros, onLimpiar }) {
   const { anio, concepto, mes } = filtros;
   const periodo = [mes !== TODOS && mes, anio !== TODOS && anio].filter(Boolean).join(" ");

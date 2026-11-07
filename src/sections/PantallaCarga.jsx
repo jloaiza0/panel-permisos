@@ -15,6 +15,12 @@ const COLUMNAS = [
 // Pantalla inicial: título, zona para subir el Excel y ayuda sobre el
 // formato. "precargar" baja en segundo plano el código del dashboard
 // mientras el usuario elige el archivo, así aparece sin espera.
+/**
+ * @param {{
+ *   onDatosCargados: (registros: Registro[], nombreArchivo: string) => void,
+ *   precargar?: () => unknown,
+ * }} props
+ */
 export default function PantallaCarga({ onDatosCargados, precargar }) {
   useEffect(() => { precargar?.(); }, [precargar]);
 

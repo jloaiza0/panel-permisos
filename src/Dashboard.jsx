@@ -22,10 +22,13 @@ import ResumenPersona from "./sections/ResumenPersona.jsx";
 import ConsultaPersona from "./sections/ConsultaPersona.jsx";
 import PiePagina from "./components/ui/PiePagina.jsx";
 
+/**
+ * @param {{ datos: Registro[], nombreArchivo: string, onReiniciar: () => void }} props
+ */
 export default function Dashboard({ datos, nombreArchivo, onReiniciar }) {
   const d = useDashboard(datos);
   const { filtros, cambiarFiltro, anios } = d;
-  const colorAnio = useCallback((a) => colorDeAnio(anios, a), [anios]);
+  const colorAnio = useCallback((/** @type {number} */ a) => colorDeAnio(anios, a), [anios]);
 
   // El estado vacío solo ofrece quitar concepto y mes (el año se ve arriba).
   const quitarConceptoYMes = () => {
@@ -35,9 +38,6 @@ export default function Dashboard({ datos, nombreArchivo, onReiniciar }) {
 
   return (
     <div className="page">
-      {/* Enlace para saltar los filtros con el teclado (solo se ve al recibir foco) */}
-      <a className="skip-link" href="#resultados">Saltar a los resultados</a>
-
       <main className="dashboard">
         <Encabezado nombreArchivo={nombreArchivo} totalRegistros={datos.length} anios={anios}
           filtros={filtros} onCambiarFiltro={cambiarFiltro} onReiniciar={onReiniciar} />

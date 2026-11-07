@@ -11,10 +11,18 @@ import { describir, fmtNum } from "../lib/formato.js";
 import { mesPorAnio, totalesPorAnio } from "../lib/estadisticas.js";
 
 // Texto para lectores de pantalla de una gráfica con una línea por año.
+/**
+ * @param {Array<Record<string | number, any>>} filas
+ * @param {number[]} anios
+ */
 const describirLineas = (filas, anios) =>
   anios.map((a) => `${a}: ${filas.map((f) => `${f.mes} ${fmtNum(f[a])}`).join(", ")}`).join(". ");
 
 // Líneas de una gráfica mes a mes: una por año.
+/**
+ * @param {number[]} anios
+ * @param {(anio: number) => string} colorAnio
+ */
 const lineas = (anios, colorAnio) =>
   anios.map((a) => (
     <Line {...ANIM} {...puntos(colorAnio(a))} key={a} type="linear" dataKey={a} name={String(a)}
@@ -23,10 +31,14 @@ const lineas = (anios, colorAnio) =>
 
 // Comparativo entre años. Usa TODOS los registros a propósito (ignora los
 // filtros de arriba): su función es comparar años entre sí.
+/**
+ * @param {{ datos: Registro[], anios: number[], colorAnio: (anio: number) => string }} props
+ */
 export default function ComparativoAnios({ datos, anios, colorAnio }) {
   // Por defecto compara los dos años más recientes.
-  const [anioA, setAnioA] = useState(anios.at(-2) ?? anios[0]);
-  const [anioB, setAnioB] = useState(anios.at(-1));
+  // (Esta sección solo se muestra con 2 años o más.)
+  const [anioA, setAnioA] = useState(/** @type {number} */ (anios.at(-2)));
+  const [anioB, setAnioB] = useState(/** @type {number} */ (anios.at(-1)));
   // Si eligen el mismo año en los dos lados, se dibuja una sola vez.
   const elegidos = anioA === anioB ? [anioA] : [anioA, anioB];
 
@@ -36,7 +48,7 @@ export default function ComparativoAnios({ datos, anios, colorAnio }) {
     () => mesPorAnio(datos, anioA === anioB ? [anioA] : [anioA, anioB]),
     [datos, anioA, anioB]
   );
-  const totales = (a) => porAnio.find((x) => x.anio === a) ?? { cantidad: 0, horas: 0 };
+  const totales = (/** @type {number} */ a) => porAnio.find((x) => x.anio === a) ?? { cantidad: 0, horas: 0 };
 
   return (
     <Section className="fade-in" title="Comparativo entre años" subtitle="Todos los años, sin aplicar los filtros de arriba">

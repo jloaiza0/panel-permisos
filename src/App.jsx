@@ -24,7 +24,7 @@ const Dashboard = lazy(cargarDashboard);
 
 export default function App() {
   // null = todavía no hay Excel; si no, { registros, nombre }.
-  const [carga, setCarga] = useState(null);
+  const [carga, setCarga] = useState(/** @type {{ registros: Registro[], nombre: string } | null} */ (null));
 
   if (!carga) {
     return (

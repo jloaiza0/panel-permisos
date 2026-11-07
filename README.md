@@ -73,17 +73,24 @@ Más detalle en [docs/ARQUITECTURA.md](docs/ARQUITECTURA.md). Seguridad en
 - **Pruebas:** cálculos, lector de Excel (incluidos archivos maliciosos),
   Web Worker y la interfaz completa con Testing Library. Cobertura mínima
   exigida: 90 % de líneas.
-- **Tipos:** la lógica se revisa en modo estricto con TypeScript sobre
-  JavaScript (JSDoc), sin migrar a `.ts`.
+- **Tipos:** todo `src/` (lógica y props de cada componente) se revisa en
+  modo estricto con TypeScript sobre JavaScript (JSDoc), sin migrar a `.ts`.
+- **Accesibilidad:** auditoría automática con axe-core (WCAG 2.2 AA) en
+  cada pantalla y estado, dentro de las pruebas.
 - **CI:** cada push a `main` corre lint, tipos, pruebas con cobertura, build
   y auditoría de dependencias. Dependabot propone actualizaciones semanales.
 
 ## Accesibilidad
 
-Navegable con teclado (enlace "Saltar a los resultados", zona de carga
-activable con Enter/Espacio), estados anunciados a lectores de pantalla,
-resumen en texto de cada gráfica, colores aptos para daltonismo, respeta
-"reducir movimiento" y modo claro/oscuro.
+Auditado con **axe-core** (WCAG 2.2 AA + buenas prácticas) en un navegador
+real, en modo claro y oscuro, en todos los estados (carga, error, dashboard,
+filtros, sin resultados, tabla): **0 problemas**, contraste incluido. La
+misma auditoría corre en cada CI (`src/a11y.test.jsx`).
+
+Navegable con teclado (enlace "Saltar a los resultados" justo después del
+título, zona de carga activable con Enter/Espacio, tabla con scroll
+enfocable), estados anunciados a lectores de pantalla, resumen en texto de
+cada gráfica, colores aptos para daltonismo, respeta "reducir movimiento".
 
 ## Tecnologías
 

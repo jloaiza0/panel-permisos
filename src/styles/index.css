@@ -739,6 +739,7 @@ input { caret-color: var(--brand); }
   border: 1px solid var(--line-soft);
   border-radius: 8px;
 }
+.table-wrap:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
 .table { width: 100%; border-collapse: collapse; font-size: 13px; }
 .table th {
   position: sticky; /* el encabezado se queda fijo al hacer scroll */

@@ -11,6 +11,7 @@ const LIMITE_FILAS = 200;
 
 // Buscador por nombre con tabla de historial. Respeta los filtros de arriba
 // y no distingue tildes ni mayúsculas ("jose" encuentra a "José").
+/** @param {{ registros: Registro[] }} props */
 export default function ConsultaPersona({ registros }) {
   const [busqueda, setBusqueda] = useState("");
   // useDeferredValue: la caja de texto responde al instante y la búsqueda
@@ -40,7 +41,9 @@ export default function ConsultaPersona({ registros }) {
               ? `Mostrando los ${LIMITE_FILAS} más recientes de ${resultados.length.toLocaleString("es-CO")} registros. Escribe más del nombre para acotar.`
               : `${resultados.length.toLocaleString("es-CO")} ${resultados.length === 1 ? "registro" : "registros"}`}
           </p>
-          <div className="table-wrap">
+          {/* La tabla tiene scroll propio: tabIndex={0} deja enfocarla con Tab
+              y recorrerla con las flechas del teclado. */}
+          <div className="table-wrap" tabIndex={0} role="region" aria-label="Resultados de la búsqueda">
             <table className="table num">
               <caption className="sr-only">Historial de permisos que coinciden con “{texto.trim()}”</caption>
               <thead>

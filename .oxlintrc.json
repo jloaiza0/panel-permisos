@@ -16,6 +16,7 @@
     "no-unused-vars": "error",
     "eqeqeq": ["error", "smart"],
     "jsx-a11y/prefer-tag-over-role": "off",
+    "jsx-a11y/no-noninteractive-tabindex": ["error", { "roles": ["region"] }],
     "import/no-unassigned-import": ["warn", { "allow": ["**/*.css", "@fontsource-variable/**"] }]
   },
   "ignorePatterns": ["dist", "src/**/*.d.ts"]

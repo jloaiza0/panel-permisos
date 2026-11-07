@@ -2,9 +2,19 @@ import { Filter, X } from "lucide-react";
 import { MESES } from "../constants/meses.js";
 import { colorConcepto } from "../constants/colores.js";
 import { TODOS } from "../lib/estadisticas.js";
+import { orden } from "../components/ui/orden.js";
 
 // Una fila de botones tipo "chip". aria-pressed le dice al lector de
 // pantalla cuál está activo, y el CSS usa ese mismo atributo para pintarlo.
+/**
+ * @param {{
+ *   etiqueta: string,
+ *   opciones: string[],
+ *   valor: string,
+ *   onCambio: (valor: string) => void,
+ *   color?: (opcion: string) => string,
+ * }} props
+ */
 function FilaChips({ etiqueta, opciones, valor, onCambio, color }) {
   return (
     <div className="filter-row" role="group" aria-label={`Filtrar por ${etiqueta.toLowerCase()}`}>
@@ -23,10 +33,20 @@ function FilaChips({ etiqueta, opciones, valor, onCambio, color }) {
 // Filtros de concepto y mes, y una línea que dice cuántos permisos quedan.
 // Esa línea es role="status": el lector de pantalla la anuncia al cambiar
 // un filtro, así quien no ve las gráficas sabe que el contenido cambió.
+/**
+ * @param {{
+ *   conceptos: string[],
+ *   filtros: Filtros,
+ *   onCambiarFiltro: <K extends keyof Filtros>(campo: K, valor: Filtros[K]) => void,
+ *   visibles: number,
+ *   total: number,
+ *   onLimpiar: () => void,
+ * }} props
+ */
 export default function Filtros({ conceptos, filtros, onCambiarFiltro, visibles, total, onLimpiar }) {
   const hayFiltros = Object.values(filtros).some((v) => v !== TODOS);
   return (
-    <div className="filters no-print reveal" style={{ "--i": 1 }}>
+    <div className="filters no-print reveal" style={orden(1)}>
       <FilaChips etiqueta="Concepto" opciones={conceptos} valor={filtros.concepto}
         onCambio={(c) => onCambiarFiltro("concepto", c)} color={colorConcepto} />
       <FilaChips etiqueta="Mes" opciones={MESES} valor={filtros.mes}

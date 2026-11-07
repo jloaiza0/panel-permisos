@@ -17,7 +17,7 @@ import "./styles/index.css";
 import App from "./App.jsx";
 import ErrorBoundary from "./components/ui/ErrorBoundary.jsx";
 
-const root = document.getElementById("root");
+const root = /** @type {HTMLElement} */ (document.getElementById("root"));
 
 // Protección contra "clickjacking": otro sitio podría mostrar este panel
 // dentro de un marco invisible y engañar al usuario para que haga clic.
@@ -25,8 +25,9 @@ const root = document.getElementById("root");
 // aquí: dentro de un marco, se intenta salir y, si no se puede, no se
 // dibuja el panel. (Solo en producción: las herramientas de desarrollo usan
 // marcos.)
-if (window.top !== window.self && import.meta.env.PROD) {
-  try { window.top.location = window.location.href; } catch { /* el marco no lo permite */ }
+const marco = window.top;
+if (marco && marco !== window.self && import.meta.env.PROD) {
+  try { marco.location.href = window.location.href; } catch { /* el marco no lo permite */ }
   root.textContent = "Por seguridad, este panel solo se puede abrir directamente en su propia pestaña.";
 } else {
   createRoot(root).render(

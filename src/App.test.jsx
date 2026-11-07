@@ -24,7 +24,7 @@ describe("App", () => {
   it("muestra la pantalla de carga con la ayuda de formato", () => {
     render(<App />);
     expect(screen.getByRole("heading", { name: "Panel de ausentismo" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Seleccionar archivo Excel de permisos" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^Selecciona o arrastra tu Excel de permisos/ })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /Descargar plantilla/ })).toHaveAttribute("href", expect.stringMatching(/plantilla-permisos.xlsx$/));
     expect(screen.getByText(/v\d+\.\d+\.\d+/)).toBeInTheDocument();
   });
@@ -52,7 +52,7 @@ describe("App", () => {
     expect(screen.getByText("5 registros")).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Otro archivo" }));
-    expect(screen.getByRole("button", { name: "Seleccionar archivo Excel de permisos" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^Selecciona o arrastra tu Excel de permisos/ })).toBeInTheDocument();
   });
 
   it("la zona de carga se puede abrir con el teclado", async () => {
@@ -60,7 +60,7 @@ describe("App", () => {
     render(<App />);
     let abierto = 0;
     inputArchivo().addEventListener("click", () => abierto++);
-    screen.getByRole("button", { name: "Seleccionar archivo Excel de permisos" }).focus();
+    screen.getByRole("button", { name: /^Selecciona o arrastra tu Excel de permisos/ }).focus();
     await user.keyboard("{Enter}");
     await user.keyboard(" ");
     expect(abierto).toBe(2);

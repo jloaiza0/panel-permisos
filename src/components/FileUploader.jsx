@@ -27,23 +27,27 @@ import { ErrorArchivo, MENSAJE_GENERAL } from "../lib/excel/parseExcel.js";
 // (desde App.jsx). Es la forma en que React permite que un componente hijo
 // "hable" con su padre: cuando el archivo ya está listo, este componente
 // simplemente llama a onDatosCargados(...) y App.jsx se entera.
+/**
+ * @param {{ onDatosCargados: (registros: Registro[], nombreArchivo: string) => void }} props
+ */
 export default function FileUploader({ onDatosCargados }) {
 
   // useRef: una "referencia" directa a la etiqueta <input> de más abajo
   // (la que está oculta). La usamos para poder decirle "haz click" desde
   // código, cuando el usuario hace click en toda la cajita, no solo en el
   // input real.
-  const inputRef = useRef(null);
+  const inputRef = useRef(/** @type {HTMLInputElement | null} */ (null));
 
   // useState: cada uno de estos es un pedacito de "memoria" del componente.
   // Cuando cambian, React vuelve a dibujar la pantalla automáticamente.
   const [arrastrando, setArrastrando] = useState(false); // ¿el usuario está arrastrando un archivo encima ahora mismo?
   const [cargando, setCargando] = useState(false);       // ¿estamos procesando el archivo en este momento?
-  const [error, setError] = useState(null);              // mensaje de error a mostrar (o null si no hay ninguno)
+  const [error, setError] = useState(/** @type {string | null} */ (null));              // mensaje de error a mostrar (o null si no hay ninguno)
   const [intentosFallidos, setIntentosFallidos] = useState(0); // cuenta errores, para sacudir la cajita CADA vez (aunque el mensaje sea el mismo)
-  const zonaRef = useRef(null); // referencia a la cajita, para animarla
+  const zonaRef = useRef(/** @type {HTMLDivElement | null} */ (null)); // referencia a la cajita, para animarla
 
   // Muestra un error y cuenta el intento fallido.
+  /** @param {string} mensaje */
   function fallar(mensaje) {
     setError(mensaje);
     setIntentosFallidos(n => n + 1);
@@ -72,6 +76,7 @@ export default function FileUploader({ onDatosCargados }) {
 
   // Esta es la función principal: se ejecuta cada vez que el usuario
   // selecciona un archivo, ya sea haciendo click o arrastrándolo.
+  /** @param {File | undefined} file */
   async function procesarArchivo(file) {
     // Si por alguna razón no llegó ningún archivo, no hacemos nada.
     if (!file) return;
@@ -138,8 +143,9 @@ export default function FileUploader({ onDatosCargados }) {
       // quien navega solo con teclado no podía subir el archivo.
       role="button"
       tabIndex={0}
-      aria-label="Seleccionar archivo Excel de permisos"
-      aria-describedby={error ? "dropzone-error" : undefined}
+      // Sin aria-label: el lector de pantalla lee exactamente el texto que
+      // se ve dentro de la cajita (título, formatos y error). Así quien usa
+      // control por voz puede decir "clic en Selecciona o arrastra…".
       aria-busy={cargando}
       data-dragging={arrastrando}
       data-busy={cargando}
@@ -159,7 +165,7 @@ export default function FileUploader({ onDatosCargados }) {
       // sobre el ícono o el texto de adentro el navegador también dispara
       // dragleave, y sin esta revisión el verde parpadeaba.
       onDragLeave={(e) => {
-        if (!e.currentTarget.contains(e.relatedTarget)) setArrastrando(false);
+        if (!e.currentTarget.contains(/** @type {Node | null} */ (e.relatedTarget))) setArrastrando(false);
       }}
       onDrop={(e) => {
         e.preventDefault();
@@ -187,7 +193,7 @@ export default function FileUploader({ onDatosCargados }) {
         // Mientras se procesa: spinner + texto (aria-live avisa a lectores de pantalla)
         <div aria-live="polite" style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12, color: "var(--brand)" }}>
           <Loader2 size={28} className="spin" aria-hidden="true" />
-          <p style={{ color: "var(--ink-2)", fontSize: 14 }}>Procesando archivo…</p>
+          <p id="dropzone-titulo" style={{ color: "var(--ink-2)", fontSize: 14 }}>Procesando archivo…</p>
         </div>
       ) : (
         <>
@@ -197,10 +203,10 @@ export default function FileUploader({ onDatosCargados }) {
             {/* Cambia el ícono según si hay algo arrastrándose encima */}
             {arrastrando ? <FileSpreadsheet size={32} aria-hidden="true" /> : <Upload size={32} aria-hidden="true" />}
           </div>
-          <p style={{ fontWeight: 600, color: "var(--ink)", marginBottom: 4 }}>
+          <p id="dropzone-titulo" style={{ fontWeight: 600, color: "var(--ink)", marginBottom: 4 }}>
             {arrastrando ? "Suelta el archivo para cargarlo" : "Selecciona o arrastra tu Excel de permisos"}
           </p>
-          <p style={{ fontSize: 13, color: "var(--ink-2)" }}>
+          <p id="dropzone-ayuda" style={{ fontSize: 13, color: "var(--ink-2)" }}>
             Formatos aceptados: .xlsx y .xls · máximo 10 MB
           </p>
         </>

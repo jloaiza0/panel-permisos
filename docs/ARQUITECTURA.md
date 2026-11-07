@@ -61,3 +61,4 @@ flowchart LR
 | `Dashboard.test.jsx` | Filtros, comparativos, resumen por persona |
 | `sections/ConsultaPersona.test.jsx` | Búsqueda y límite de filas |
 | `components/**.test.jsx` | Zona de carga, tema, tarjetas, tooltip |
+| `a11y.test.jsx` | Auditoría axe-core (WCAG 2.2 AA) de cada pantalla y estado |

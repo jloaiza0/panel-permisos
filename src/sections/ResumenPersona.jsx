@@ -13,6 +13,9 @@ import { TODOS, resumenPersona } from "../lib/estadisticas.js";
 
 // Permisos de una persona elegida en el desplegable. Respeta los filtros de
 // año y concepto: sin año elegido desglosa por año; con año, por mes.
+/**
+ * @param {{ datos: Registro[], personas: string[], filtros: Filtros }} props
+ */
 export default function ResumenPersona({ datos, personas, filtros }) {
   const [persona, setPersona] = useState("");
   const { anio, concepto } = filtros;
@@ -50,7 +53,7 @@ export default function ResumenPersona({ datos, personas, filtros }) {
             <div className="grid-split">
               <Grafica titulo={porAnio ? "Permisos por año" : "Permisos por mes"} height={220}
                 descripcion={describir(resumen.porPeriodo, etiqueta, "cantidad")}>
-                <BarChart data={resumen.porPeriodo} margin={{ top: 24, right: 8, left: 0, bottom: 0 }}>
+                <BarChart data={/** @type {any[]} */ (resumen.porPeriodo)} margin={{ top: 24, right: 8, left: 0, bottom: 0 }}>
                   <CartesianGrid {...GRID_H} />
                   <XAxis dataKey={etiqueta} {...AXIS_X} />
                   <YAxis {...AXIS_Y} />
