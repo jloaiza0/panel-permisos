@@ -1,15 +1,26 @@
 <!doctype html>
-<html lang="en">
+<html lang="es">
   <head>
     <meta charset="UTF-8" />
     <meta name="robots" content="noindex, nofollow" />
     <link rel="icon" type="image/svg+xml" href="/panel-permisos/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>panel-permisos</title>
-    <script type="module" crossorigin src="/panel-permisos/assets/index-_J5iLLcs.js"></script>
-    <link rel="stylesheet" crossorigin href="/panel-permisos/assets/index-vo3rrbP_.css">
+    <meta name="theme-color" content="#F6F4EF" />
+    <title>Panel de ausentismo</title>
+    <!-- Aplica el modo oscuro ANTES de que cargue la app, si quedó guardado
+         (evita que la página aparezca un instante en blanco). -->
+    <script>
+      try {
+        if (localStorage.getItem("panel-tema") === "dark") {
+          document.documentElement.dataset.theme = "dark";
+          document.querySelector('meta[name="theme-color"]').setAttribute("content", "#14171B");
+        }
+      } catch (e) {}
+    </script>
+    <script type="module" crossorigin src="/panel-permisos/assets/index-D8YfJ00I.js"></script>
+    <link rel="stylesheet" crossorigin href="/panel-permisos/assets/index-CqvmVjgz.css">
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root"></div>
   </body>
 </html>
