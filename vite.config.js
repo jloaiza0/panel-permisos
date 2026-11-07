@@ -69,6 +69,9 @@ export default defineConfig({
   },
   test: {
     setupFiles: ['./src/test/setup.js'],
+    // Algunas pruebas leen un Excel real: en equipos lentos o en el CI pueden
+    // pasar de los 5 s por defecto.
+    testTimeout: 15000,
     coverage: {
       provider: 'v8',
       include: ['src/**/*.{js,jsx}'],
