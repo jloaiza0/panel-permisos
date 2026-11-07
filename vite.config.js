@@ -22,7 +22,10 @@ function cspPlugin() {
         const csp = [
           "default-src 'self'",
           `script-src 'self' ${hashes.join(' ')}`,
-          "style-src 'self' 'unsafe-inline'", // las gráficas usan estilos inline
+          // Sin 'unsafe-inline': React y las gráficas aplican estilos desde
+          // JavaScript (style.propiedad = ...), y eso la CSP sí lo permite.
+          "style-src 'self'",
+          "worker-src 'self'",
           "img-src 'self' data:",
           "font-src 'self'",
           "connect-src 'self'",

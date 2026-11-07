@@ -72,10 +72,25 @@ import ErrorBoundary from './components/ErrorBoundary.jsx'
 //    App (o de cualquier componente que ella use), el ErrorBoundary lo
 //    atrapa. Si <ErrorBoundary> no envolviera a <App />, un error ahí
 //    dejaría la pantalla en blanco sin ningún control.
-createRoot(document.getElementById('root')).render(
-  <StrictMode>
-    <ErrorBoundary>
-      <App />
-    </ErrorBoundary>
-  </StrictMode>,
-)
+//
+// Protección contra "clickjacking": otro sitio podría mostrar este panel
+// dentro de un marco invisible y engañar al usuario para que haga clic en
+// él. GitHub Pages no deja enviar la cabecera que lo prohíbe, así que lo
+// revisamos aquí: si estamos dentro de un marco, intentamos salir de él y,
+// si no se puede, no dibujamos el panel. (Solo en producción, para no
+// estorbar en herramientas de desarrollo que usan marcos.)
+const dentroDeMarco = window.top !== window.self
+
+if (dentroDeMarco && import.meta.env.PROD) {
+  try { window.top.location = window.location.href } catch { /* el marco no lo permite */ }
+  document.getElementById('root').textContent =
+    'Por seguridad, este panel solo se puede abrir directamente en su propia pestaña.'
+} else {
+  createRoot(document.getElementById('root')).render(
+    <StrictMode>
+      <ErrorBoundary>
+        <App />
+      </ErrorBoundary>
+    </StrictMode>,
+  )
+}

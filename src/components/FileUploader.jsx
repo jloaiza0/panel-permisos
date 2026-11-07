@@ -20,7 +20,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Upload, FileSpreadsheet, Loader2 } from "lucide-react"; // iconos
-import { parseExcel } from "../lib/parseExcel"; // la función que de verdad lee el Excel
+import { parseExcel } from "../lib/procesarExcel"; // lee el Excel en segundo plano (Web Worker)
+import { ErrorArchivo, MENSAJE_GENERAL } from "../lib/parseExcel";
 
 // "onDatosCargados" es una FUNCIÓN que este componente recibe desde afuera
 // (desde App.jsx). Es la forma en que React permite que un componente hijo
@@ -113,7 +114,9 @@ export default function FileUploader({ onDatosCargados }) {
       // PASO 5: Si parseExcel.js lanzó un error (por ejemplo, "faltan
       // columnas" o "las fechas no son válidas"), lo atrapamos aquí y
       // mostramos su mensaje al usuario en vez de dejar que la app truene.
-      fallar(e.message || "No se pudo leer el archivo. Verifica que sea el formato correcto.");
+      // Solo mostramos mensajes escritos por nosotros (ErrorArchivo); un
+      // error interno del navegador vendría en inglés técnico.
+      fallar(e instanceof ErrorArchivo ? e.message : MENSAJE_GENERAL);
 
     } finally {
       // "finally" se ejecuta SIEMPRE, haya salido bien o mal el try.

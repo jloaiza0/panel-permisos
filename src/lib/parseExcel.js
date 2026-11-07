@@ -23,6 +23,64 @@
 
 
 // ----------------------------------------------------------------------------
+// PARTE 0: Límites de seguridad
+// ----------------------------------------------------------------------------
+//
+// Protegen la pestaña de archivos gigantes o manipulados que la dejarían
+// congelada o sin memoria.
+export const MAX_FILAS = 100000;
+const MAX_COLUMNAS = 50;
+// Un .xlsx es en realidad un .zip. Un archivo de 1 MB puede "inflarse" a
+// gigas al descomprimirse (una "zip-bomb"); por eso miramos cuánto pesaría
+// descomprimido ANTES de abrirlo. 300 MB es muchísimo más de lo que ocupa
+// un Excel real de permisos.
+const MAX_DESCOMPRIMIDO = 300 * 1024 * 1024;
+// Si leer el archivo tarda más que esto, lo cancelamos.
+export const TIEMPO_MAXIMO_MS = 30000;
+
+// Error "nuestro": su mensaje está escrito para el usuario y se puede
+// mostrar tal cual. Cualquier otro error (de la librería, del navegador)
+// trae texto técnico en inglés, y en su lugar mostramos un mensaje general.
+export class ErrorArchivo extends Error {}
+export const MENSAJE_GENERAL =
+  "No se pudo leer el archivo. Verifica que sea un Excel válido (.xlsx o .xls).";
+
+// Lee el "índice" del zip (está al final del archivo) y suma cuánto pesan
+// todos sus archivos internos ya descomprimidos. No descomprime nada: solo
+// lee números del índice, así que es instantáneo.
+function revisarTamanoZip(bytes) {
+  // Los .xlsx empiezan con "PK" (la firma de zip). Los .xls viejos usan
+  // otro formato, sin compresión, así que no aplica.
+  if (bytes[0] !== 0x50 || bytes[1] !== 0x4b) return;
+  const vista = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+
+  // Buscamos, desde el final, la firma del "fin del índice" (0x06054b50).
+  let fin = -1;
+  for (let i = bytes.length - 22; i >= Math.max(0, bytes.length - 65557); i--) {
+    if (vista.getUint32(i, true) === 0x06054b50) { fin = i; break; }
+  }
+  if (fin === -1) return; // zip dañado: la librería lo rechazará después
+
+  const entradas = vista.getUint16(fin + 10, true);
+  let pos = vista.getUint32(fin + 16, true);
+  let total = 0;
+  for (let n = 0; n < entradas; n++) {
+    if (pos + 46 > bytes.length || vista.getUint32(pos, true) !== 0x02014b50) break;
+    const tamano = vista.getUint32(pos + 24, true);
+    // 0xFFFFFFFF significa "más de 4 GB" (formato zip64): imposible en un
+    // Excel de permisos.
+    total += tamano === 0xffffffff ? Infinity : tamano;
+    if (total > MAX_DESCOMPRIMIDO) {
+      throw new ErrorArchivo(
+        "El archivo es demasiado grande al abrirlo. Verifica que sea el archivo correcto."
+      );
+    }
+    pos += 46 + vista.getUint16(pos + 28, true) + vista.getUint16(pos + 30, true) + vista.getUint16(pos + 32, true);
+  }
+}
+
+
+// ----------------------------------------------------------------------------
 // PARTE 1: Cargar la librería "xlsx" solo cuando hace falta
 // ----------------------------------------------------------------------------
 //
@@ -35,13 +93,8 @@
 // "xlsxPromise" guarda el resultado la primera vez que se pide, para que
 // si el usuario sube dos archivos seguidos, la segunda vez no se vuelva a
 // descargar la librería — ya la tenemos guardada.
-// Límites de seguridad: protegen la pestaña de archivos gigantes o
-// manipulados que la dejarían congelada.
-const MAX_FILAS = 100000;
-const MAX_COLUMNAS = 50;
-
 let xlsxPromise = null;
-function cargarXLSX() {
+export function cargarXLSX() {
   if (!xlsxPromise) xlsxPromise = import("xlsx");
   return xlsxPromise;
 }
@@ -152,7 +205,7 @@ function ubicarColumnas(filas) {
   if (!filas || filas.length < 2) {
     // filas[0] serían los encabezados; si no hay ni una fila más después,
     // no hay datos que procesar.
-    throw new Error("El archivo está vacío o no tiene registros.");
+    throw new ErrorArchivo("El archivo está vacío o no tiene registros.");
   }
 
   // Tomamos la primera fila (los encabezados) y la limpiamos: quitamos
@@ -176,7 +229,7 @@ function ubicarColumnas(filas) {
   if (faltantes.length > 0) {
     // Si falta alguna, no seguimos: lanzamos un error con un mensaje
     // claro que dice EXACTAMENTE qué columnas faltan.
-    throw new Error(
+    throw new ErrorArchivo(
       `El archivo no tiene el formato esperado. Faltan las columnas: ${faltantes.join(", ")}.`
     );
   }
@@ -192,7 +245,7 @@ function validarContenido(filas, cols) {
   // .slice(1, ...) porque la fila 0 son los encabezados, no datos.
   const muestra = filas.slice(1, Math.min(filas.length, 21));
   if (muestra.length === 0) {
-    throw new Error("El archivo no tiene filas de datos para validar.");
+    throw new ErrorArchivo("El archivo no tiene filas de datos para validar.");
   }
 
   let fechasValidas = 0;
@@ -223,12 +276,12 @@ function validarContenido(filas, cols) {
   // lo correcto) — mejor avisar antes que mostrar un dashboard con
   // basura.
   if (fechasValidas / muestra.length < 0.7) {
-    throw new Error(
+    throw new ErrorArchivo(
       "La columna de Fecha no contiene fechas válidas. Verifica que el archivo sea el correcto."
     );
   }
   if (nombresValidos / muestra.length < 0.7) {
-    throw new Error(
+    throw new ErrorArchivo(
       "La columna de Nombre no contiene nombres de personas válidos. Verifica que el archivo sea el correcto."
     );
   }
@@ -239,24 +292,18 @@ function validarContenido(filas, cols) {
 // PARTE 4: La función principal — la que se usa desde afuera
 // ----------------------------------------------------------------------------
 //
-// Esta es la ÚNICA función de este archivo que FileUploader.jsx llama
-// directamente. Todo lo de arriba son "ayudantes" que ella usa por dentro.
+// leerExcel() hace todo el trabajo: recibe los bytes del archivo y la
+// librería xlsx, y devuelve la lista de permisos (o lanza un error).
+// No toca la pantalla ni el navegador, así que se puede probar sola
+// (ver parseExcel.test.js) y correr dentro de un Web Worker (PARTE 5).
 //
 // "export" significa que otros archivos SÍ pueden importar y usar esta
 // función (a diferencia de las de arriba, que no tienen "export" y solo
 // existen para uso interno de este archivo).
-//
-// "async" significa que esta función hace cosas que toman tiempo (leer un
-// archivo, cargar una librería) y por eso se debe usar con "await" desde
-// donde se llama.
-export async function parseExcel(file) {
+export function leerExcel(buffer, XLSX) {
 
-  // Cargamos la librería xlsx (ver PARTE 1) justo cuando la necesitamos.
-  const XLSX = await cargarXLSX();
-
-  // file.arrayBuffer() lee el contenido crudo (en bytes) del archivo que
-  // seleccionó el usuario.
-  const buffer = await file.arrayBuffer();
+  // Antes de abrirlo, revisamos que no sea una "zip-bomb" (ver PARTE 0).
+  revisarTamanoZip(new Uint8Array(buffer));
 
   // XLSX.read() interpreta esos bytes como un archivo Excel real.
   // cellDates: true le pide a la librería que, cuando pueda, nos entregue
@@ -268,10 +315,9 @@ export async function parseExcel(file) {
 
   // Un Excel puede tener varias hojas (pestañas); tomamos la primera.
   const hoja = workbook.Sheets[workbook.SheetNames[0]];
-  if (!hoja) throw new Error("El archivo no tiene hojas con datos.");
+  if (!hoja) throw new ErrorArchivo("El archivo no tiene hojas con datos.");
 
-  // Solo necesitamos unas pocas columnas: solo necesitamos unas pocas, así que recortamos
-  // el rango a MAX_COLUMNAS para no recorrer miles de celdas vacías.
+  // Solo necesitamos unas pocas columnas, así que recortamos el rango a MAX_COLUMNAS para no recorrer miles de celdas vacías.
   if (hoja["!ref"]) {
     const rango = XLSX.utils.decode_range(hoja["!ref"]);
     rango.e.c = Math.min(rango.e.c, MAX_COLUMNAS - 1);
@@ -290,7 +336,7 @@ export async function parseExcel(file) {
   // Si se llenó el cupo de lectura, el archivo trae más filas de las
   // permitidas: avisamos en vez de mostrar datos incompletos sin decir nada.
   if (filas.length > MAX_FILAS) {
-    throw new Error(
+    throw new ErrorArchivo(
       `El archivo tiene demasiadas filas (máximo ${MAX_FILAS.toLocaleString("es-CO")}). Verifica que sea el archivo correcto.`
     );
   }
@@ -341,7 +387,7 @@ export async function parseExcel(file) {
   // NINGÚN registro válido, es mejor avisar claramente que mostrar un
   // dashboard completamente vacío sin explicación.
   if (registros.length === 0) {
-    throw new Error(
+    throw new ErrorArchivo(
       "No se encontraron registros válidos. Verifica que la columna de Fecha tenga fechas reales."
     );
   }
@@ -352,7 +398,7 @@ export async function parseExcel(file) {
   // avisamos en vez de mostrar un dashboard con la mitad de los datos
   // faltando silenciosamente.
   if (filasConDatos > 0 && registros.length / filasConDatos < 0.5) {
-    throw new Error(
+    throw new ErrorArchivo(
       "Muchas filas tienen fechas inválidas. Revisa el formato de la columna Fecha en el Excel."
     );
   }
