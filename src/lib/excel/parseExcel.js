@@ -8,7 +8,7 @@
 // React SÍ puede usar: un arreglo (lista) de objetos simples, uno por cada
 // permiso, con esta forma:
 //
-//     { fecha: "2025-03-14", anio: 2025, mes: "Mar",
+//     { id: 0, fecha: "2025-03-14", anio: 2025, mes: "Mar",
 //       nombre: "Juan Pérez", concepto: "PERSONAL", tiempoMin: 480 }
 //
 // Este archivo NO dibuja nada en pantalla — no tiene JSX, no es un
@@ -20,6 +20,7 @@
 // correcto, este archivo lo detecta y lanza un error ANTES de dejar
 // entrar datos basura al dashboard.
 // ============================================================================
+import { MESES } from "../../constants/meses.js";
 
 
 // ----------------------------------------------------------------------------
@@ -139,10 +140,9 @@ function normalizarConcepto(valor) {
   return (valor || "").toString().trim().toUpperCase();
 }
 
-// Nombres cortos de los 12 meses, en el mismo orden que los usa el resto
-// de la app (gráficas, filtros, etc.). El índice 0 es Enero, el 11 es
-// Diciembre — por eso más abajo usamos "m - 1" para ubicar el mes correcto.
-const MESES_ABREV = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
+// Los nombres cortos de los meses vienen de constants/meses.js (la misma
+// lista que usan las gráficas). El índice 0 es Enero — por eso más abajo
+// usamos "m - 1" para ubicar el mes correcto.
 
 // Convierte el valor de la columna "Fecha" (que puede venir como objeto
 // Date de JavaScript, o como número raro de Excel) en tres datos ya
@@ -178,7 +178,7 @@ function excelFechaAPartes(valor, XLSX) {
   // mes o el día son de un solo dígito (por ejemplo, "3" se vuelve "03").
   const iso = `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
 
-  return { iso, anio: y, mes: MESES_ABREV[m - 1] };
+  return { iso, anio: y, mes: MESES[m - 1] };
 }
 
 
@@ -374,6 +374,7 @@ export function leerExcel(buffer, XLSX) {
 
     // Agregamos el registro ya limpio y normalizado a la lista final.
     registros.push({
+      id: registros.length, // identificador único (sirve de "key" en las tablas)
       fecha: partes.iso,
       anio: partes.anio,
       mes: partes.mes,

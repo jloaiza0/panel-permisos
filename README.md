@@ -1,16 +1,65 @@
-# React + Vite
+# Panel de ausentismo
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Dashboard para analizar los permisos del personal a partir de un Excel.
+Subes el archivo y ves totales, horas, tendencias por mes, comparación entre
+años, el top 10 de personas y el historial de cada una.
 
-Currently, two official plugins are available:
+**El archivo nunca sale de tu equipo**: todo se procesa en el navegador. No
+hay servidor ni base de datos.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Formato del Excel
 
-## React Compiler
+La primera hoja debe tener una fila de encabezados con estas columnas (en
+cualquier orden; se buscan por nombre, sin importar mayúsculas):
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+| Columna    | Obligatoria | Contenido                                   |
+|------------|-------------|---------------------------------------------|
+| `Fecha`    | Sí          | Fecha del permiso                           |
+| `Nombre`   | Sí          | Nombre de la persona                        |
+| `Concepto` | Sí          | Tipo de permiso (PERSONAL, CITA MÉDICA, …)  |
+| `Tiempo`   | No          | Duración en formato de hora de Excel        |
 
-## Expanding the Oxlint configuration
+Límites: 10 MB, 100.000 filas.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+## Uso
+
+```bash
+npm install
+npm run dev       # servidor local en http://localhost:5173/panel-permisos/
+npm test          # pruebas
+npm run lint      # revisión de código
+npm run deploy    # pasa lint y pruebas, compila y publica en GitHub Pages
+```
+
+## Estructura
+
+```
+src/
+  main.jsx              arranque + protección anti-clickjacking
+  App.jsx               elige pantalla: carga o dashboard
+  Dashboard.jsx         layout del dashboard (se descarga aparte)
+  constants/            meses y colores de las gráficas
+  lib/
+    excel/              lectura segura del Excel (Web Worker, límites, zip-bomb)
+    estadisticas.js     todos los cálculos (KPIs, agrupaciones, búsqueda)
+    formato.js          números, horas y fechas en formato colombiano
+  hooks/                useDashboard (filtros + cálculos), useNarrow
+  components/
+    ui/                 Section, KpiCard, MiniStat, YearSelector, ThemeToggle, ErrorBoundary
+    charts/             Grafica, ChartTooltip, PeakLabel, chartTheme
+    FileUploader.jsx    zona para subir el Excel
+  sections/             cada bloque visual del dashboard
+  styles/index.css      tokens de diseño (claro/oscuro) y estilos
+```
+
+## Seguridad
+
+- Política CSP estricta (solo scripts propios, sin conexiones externas).
+- Bloqueo de la página dentro de marcos de otros sitios.
+- El Excel se lee en un Web Worker con tiempo máximo, límite de filas y
+  columnas, y detección de archivos comprimidos maliciosos (zip-bomb).
+- Los textos del Excel se muestran siempre como texto plano.
+
+## Tecnologías
+
+React 19, Vite, Recharts, SheetJS (xlsx), Vitest y Oxlint.

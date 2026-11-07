@@ -60,7 +60,7 @@ describe("archivos válidos", () => {
     const r = leer(excel([ENCABEZADOS, ...filasValidas(30)]));
     expect(r).toHaveLength(30);
     expect(r[0]).toEqual({
-      fecha: "2025-03-14", anio: 2025, mes: "Mar",
+      id: 0, fecha: "2025-03-14", anio: 2025, mes: "Mar",
       nombre: "Persona 0", concepto: "PERSONAL", tiempoMin: 720,
     });
   });
@@ -83,7 +83,7 @@ describe("archivos inválidos se rechazan con mensaje propio", () => {
 
   it("HTML disfrazado de Excel lanza error (FileUploader muestra el mensaje general)", () => {
     const html = new TextEncoder().encode("<html><script>alert(1)</script></html>").buffer;
-    expect(() => leer(html)).toThrow();
+    expect(() => leer(html)).toThrow(Error);
   });
 });
 

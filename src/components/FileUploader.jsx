@@ -20,8 +20,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Upload, FileSpreadsheet, Loader2 } from "lucide-react"; // iconos
-import { parseExcel } from "../lib/procesarExcel"; // lee el Excel en segundo plano (Web Worker)
-import { ErrorArchivo, MENSAJE_GENERAL } from "../lib/parseExcel";
+import { parseExcel } from "../lib/excel/procesarExcel.js"; // lee el Excel en segundo plano (Web Worker)
+import { ErrorArchivo, MENSAJE_GENERAL } from "../lib/excel/parseExcel.js";
 
 // "onDatosCargados" es una FUNCIÓN que este componente recibe desde afuera
 // (desde App.jsx). Es la forma en que React permite que un componente hijo
@@ -155,7 +155,12 @@ export default function FileUploader({ onDatosCargados }) {
         e.preventDefault(); // sin esto, el navegador no deja "soltar" el archivo aquí
         setArrastrando(true); // pinta la cajita en verde mientras el archivo está encima
       }}
-      onDragLeave={() => setArrastrando(false)}
+      // Solo cuenta como "salió" si el puntero dejó la cajita entera: al pasar
+      // sobre el ícono o el texto de adentro el navegador también dispara
+      // dragleave, y sin esta revisión el verde parpadeaba.
+      onDragLeave={(e) => {
+        if (!e.currentTarget.contains(e.relatedTarget)) setArrastrando(false);
+      }}
       onDrop={(e) => {
         e.preventDefault();
         setArrastrando(false);
@@ -196,7 +201,7 @@ export default function FileUploader({ onDatosCargados }) {
             {arrastrando ? "Suelta el archivo para cargarlo" : "Selecciona o arrastra tu Excel de permisos"}
           </p>
           <p style={{ fontSize: 13, color: "var(--ink-2)" }}>
-            Formatos aceptados: .xlsx, .xls — el archivo no sale de tu dispositivo
+            Formatos aceptados: .xlsx y .xls · máximo 10 MB
           </p>
         </>
       )}

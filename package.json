@@ -1,15 +1,18 @@
 {
   "name": "panel-permisos",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
+  "description": "Panel de ausentismo: dashboard de permisos a partir de un Excel, procesado en el navegador.",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "lint": "oxlint",
+    "test": "vitest run",
+    "check": "npm run lint && npm test && npm run build",
     "preview": "vite preview",
-    "deploy": "vite build && gh-pages -d dist",
-    "test": "vitest run"
+    "predeploy": "npm run lint && npm test",
+    "deploy": "vite build && gh-pages -d dist"
   },
   "dependencies": {
     "@fontsource-variable/newsreader": "^5.3.0",

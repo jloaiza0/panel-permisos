@@ -16,10 +16,8 @@
      4. Movimiento (entrada del dashboard, accesibilidad de movimiento)
      5. Impresión / PDF
 
-   NOTA: se eliminó la plantilla de Vite que venía por defecto. Esa plantilla
-   activaba un "modo oscuro" automático que, en Windows con modo oscuro,
-   volvía BLANCO el título "Panel de ausentismo" sobre el fondo crema (el
-   título quedaba invisible) y era la causa real de los <select> ilegibles.
+   Las clases de cada bloque del dashboard llevan el nombre del archivo de
+   sections/ que las usa (por ejemplo .compare-bar → ComparativoAnios.jsx).
    ============================================================================ */
 
 
@@ -86,9 +84,10 @@
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
 
-  /* Modo claro por defecto, AUNQUE Windows esté en modo oscuro: así los
-     controles nativos (selects, scrollbars) no se mezclan. El modo oscuro
-     solo se activa con el botón sol/luna (ver más abajo). */
+  /* El tema lo decide <html data-theme>: index.html lo pone según lo que
+     el usuario eligió con el botón sol/luna o, la primera vez, según el
+     modo de su sistema. "color-scheme" hace que los controles nativos
+     (selects, scrollbars) sigan al tema elegido. */
   color-scheme: light;
 
   font-family: var(--sans);
@@ -185,6 +184,27 @@ input { caret-color: var(--brand); }
 /* Números con ancho fijo: así las cifras de KPIs y tablas no "bailan"
    al cambiar de filtro y quedan alineadas en columnas. */
 .num { font-variant-numeric: tabular-nums; }
+.nowrap { white-space: nowrap; }
+
+/* Texto que solo leen los lectores de pantalla (p. ej. el resumen de cada
+   gráfica): no ocupa espacio en pantalla. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Solo aparece en el PDF (ver la sección 5). Con !important porque otras
+   clases del mismo elemento (como .page-meta) le ponen display: flex. */
+@media screen {
+  .print-only { display: none !important; }
+}
 
 
 /* ---------------------------------------------------------------------------
@@ -411,6 +431,7 @@ input { caret-color: var(--brand); }
   cursor: pointer;
   transition: border-color 150ms ease;
 }
+.field-wide { margin-bottom: 16px; min-width: min(260px, 100%); max-width: 100%; }
 .field option { background: var(--surface); color: var(--ink); }
 @media (hover: hover) and (pointer: fine) {
   .field:hover { border-color: var(--line-strong); }
@@ -425,6 +446,7 @@ input { caret-color: var(--brand); }
   border: 1px solid var(--line);
   border-radius: 6px;
   padding: 8px 12px;
+  margin-bottom: 14px;
   color: var(--ink-2);
   transition: border-color 150ms ease, box-shadow 150ms ease;
 }
@@ -461,12 +483,28 @@ input { caret-color: var(--brand); }
   color: var(--ink);
 }
 .card-subtitle { font-size: var(--fs-meta); color: var(--ink-2); margin-top: 4px; }
+.section-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+/* Sub-bloques dentro de una tarjeta (ComparativoAnios) */
+.section-block { margin-top: 28px; }
+.section-divider { padding-top: 24px; border-top: 1px solid var(--line-soft); }
+.compare-bar { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
+.compare-bar .sub-title { margin-bottom: 0; }
+.compare-vs { color: var(--ink-2); font-size: var(--fs-label); }
+/* Cada gráfica es un <figure> (ver components/charts/Grafica.jsx) */
+.grafica { margin: 0; min-width: 0; }
 .sub-title { font-size: var(--fs-label); font-weight: 600; color: var(--ink); margin-bottom: 10px; }
 
 /* KPI: etiqueta en minúscula normal (las MAYÚSCULAS gritan y se leen
    más lento), número grande en la misma fuente sans que el resto: un
    número en serif se ve decorativo, no como un dato. */
 .kpi { display: flex; flex-direction: column; }
+.kpi-icon { display: inline-flex; }
 .kpi-label {
   display: flex;
   align-items: center;
@@ -511,6 +549,7 @@ input { caret-color: var(--brand); }
   margin-bottom: 4px;
 }
 .stat-dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+.grid-stats { margin-bottom: 20px; }
 .stat-value { font-size: 24px; font-weight: 650; letter-spacing: -0.02em; line-height: 1.1; color: var(--ink); }
 
 /* ---- Tooltip de las gráficas ---- */
@@ -528,6 +567,10 @@ input { caret-color: var(--brand); }
 .chart-tip-name { flex: 1; }
 .chart-tip-value { font-weight: 600; color: var(--ink); }
 
+/* Texto de la leyenda en tinta (Recharts lo pinta del color de la serie,
+   que en amarillo o naranja se lee mal); el color queda en el puntito. */
+.recharts-legend-item-text { color: var(--ink) !important; margin-right: 8px; }
+
 /* ---- Rejillas responsivas ----
    Antes eran "1fr 1fr" fijas: en un celular las dos gráficas quedaban
    apretadísimas. Ahora pasan a una columna cuando no caben. */
@@ -537,7 +580,7 @@ input { caret-color: var(--brand); }
   .grid-kpi .card { padding: 14px; }
   .kpi-value { font-size: 26px; }
 }
-.grid-split { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); gap: 20px; }
+.grid-split { min-width: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); gap: 20px; }
 .grid-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 16px 24px; }
 
 /* ---- Contenedor principal ---- */
@@ -547,6 +590,30 @@ input { caret-color: var(--brand); }
   padding-top: clamp(20px, 4vw, 32px);
   box-sizing: border-box;
 }
+.page-center { display: flex; align-items: center; justify-content: center; }
+.brand-color { color: var(--brand); }
+
+/* Dashboard: los bloques se separan con un espacio fijo, sin márgenes
+   sueltos en cada uno. */
+.dashboard { display: flex; flex-direction: column; gap: 20px; }
+.dashboard > .page-head { margin-bottom: 4px; }
+.filters { display: grid; gap: 12px; margin-bottom: 4px; }
+
+/* Pantalla inicial (PantallaCarga.jsx) */
+.upload-panel { max-width: 480px; width: 100%; }
+.upload-title { text-align: center; margin-bottom: 8px; }
+.upload-lead { text-align: center; color: var(--ink-2); font-size: 15px; margin-bottom: 28px; }
+.upload-note {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 14px;
+  font-size: var(--fs-meta);
+  color: var(--ink-2);
+}
+.upload-note svg { color: var(--brand); flex: none; }
+
 .page-head {
   display: flex;
   justify-content: space-between;
@@ -565,7 +632,9 @@ input { caret-color: var(--brand); }
   letter-spacing: -0.02em;
   color: var(--ink);
 }
+.page-head-text { min-width: 0; max-width: 100%; }
 .page-meta {
+  min-width: 0;
   display: flex;
   align-items: center;
   gap: 6px;
@@ -573,6 +642,9 @@ input { caret-color: var(--brand); }
   font-size: var(--fs-label);
   color: var(--ink-2);
 }
+/* Un nombre de archivo muy largo se recorta con "…" (sale completo al
+   pasar el mouse) en vez de empujar la barra de herramientas. */
+.page-meta-file { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 44ch; }
 .toolbar { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
 .toolbar-sep { width: 1px; height: 24px; background: var(--line); margin: 0 4px; }
 @media (max-width: 640px) { .toolbar-sep { display: none; } }
@@ -603,6 +675,7 @@ input { caret-color: var(--brand); }
   .table tbody tr:hover { background: var(--hover); }
 }
 .empty-note { font-size: 13px; color: var(--ink-2); }
+.results-count { margin-bottom: 8px; }
 
 /* ---- Zona de carga del Excel ---- */
 .dropzone {
@@ -672,6 +745,8 @@ input { caret-color: var(--brand); }
   text-align: center;
   padding: 48px 24px;
 }
+.empty-text { max-width: 52ch; }
+.empty-action { margin-top: 16px; }
 .empty-icon {
   display: inline-grid;
   place-items: center;
@@ -713,6 +788,7 @@ input { caret-color: var(--brand); }
   /* Los elementos con className="no-print" (filtros, botones, buscador)
      no salen en el PDF. */
   .no-print { display: none !important; }
+  .print-only { display: block !important; }
 
   @page {
     size: A4 landscape;
