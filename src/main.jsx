@@ -31,6 +31,12 @@ import { createRoot } from 'react-dom/client'
 // Importa los estilos globales (ver la documentación de index.css). Aunque
 // este archivo no "usa" directamente ninguna clase de ahí, esta línea es
 // necesaria para que Vite sepa que debe incluir ese CSS en la página final.
+// Fuentes alojadas DENTRO del proyecto (no se piden a Google ni a ningún
+// servidor externo): Public Sans para la interfaz y los números, y
+// Newsreader (con tamaño óptico) para los títulos.
+import '@fontsource-variable/public-sans'
+import '@fontsource-variable/newsreader/opsz.css'
+
 import './index.css'
 
 // Tu componente principal, con todo el dashboard.

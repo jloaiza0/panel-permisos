@@ -18,8 +18,8 @@
 // que el proyecto sea más fácil de mantener.
 // ============================================================================
 
-import { useRef, useState } from "react";
-import { Upload, FileSpreadsheet } from "lucide-react"; // iconos
+import { useEffect, useRef, useState } from "react";
+import { Upload, FileSpreadsheet, Loader2 } from "lucide-react"; // iconos
 import { parseExcel } from "../lib/parseExcel"; // la función que de verdad lee el Excel
 
 // "onDatosCargados" es una FUNCIÓN que este componente recibe desde afuera
@@ -39,6 +39,35 @@ export default function FileUploader({ onDatosCargados }) {
   const [arrastrando, setArrastrando] = useState(false); // ¿el usuario está arrastrando un archivo encima ahora mismo?
   const [cargando, setCargando] = useState(false);       // ¿estamos procesando el archivo en este momento?
   const [error, setError] = useState(null);              // mensaje de error a mostrar (o null si no hay ninguno)
+  const [intentosFallidos, setIntentosFallidos] = useState(0); // cuenta errores, para sacudir la cajita CADA vez (aunque el mensaje sea el mismo)
+  const zonaRef = useRef(null); // referencia a la cajita, para animarla
+
+  // Muestra un error y cuenta el intento fallido.
+  function fallar(mensaje) {
+    setError(mensaje);
+    setIntentosFallidos(n => n + 1);
+  }
+
+  // Cada vez que hay un error nuevo, la cajita hace una sacudida corta
+  // (como un "no" con la cabeza): avisa que algo falló aunque no estés
+  // mirando el texto rojo. Se usa la Web Animations API (.animate), que
+  // corre fuera del hilo principal. Si el usuario pidió "reducir
+  // movimiento", no se sacude: el mensaje y su anuncio bastan.
+  useEffect(() => {
+    if (intentosFallidos === 0) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    zonaRef.current?.animate(
+      [
+        { transform: "translateX(0)" },
+        { transform: "translateX(-6px)" },
+        { transform: "translateX(5px)" },
+        { transform: "translateX(-3px)" },
+        { transform: "translateX(2px)" },
+        { transform: "translateX(0)" },
+      ],
+      { duration: 320, easing: "cubic-bezier(0.23, 1, 0.32, 1)" }
+    );
+  }, [intentosFallidos]);
 
   // Esta es la función principal: se ejecuta cada vez que el usuario
   // selecciona un archivo, ya sea haciendo click o arrastrándolo.
@@ -52,7 +81,7 @@ export default function FileUploader({ onDatosCargados }) {
     // significa que no importa si son mayúsculas o minúsculas).
     const esExcel = /\.(xlsx|xls)$/i.test(file.name);
     if (!esExcel) {
-      setError("El archivo debe ser .xlsx o .xls");
+      fallar("El archivo debe ser .xlsx o .xls");
       return; // cortamos aquí — no seguimos procesando
     }
 
@@ -61,7 +90,7 @@ export default function FileUploader({ onDatosCargados }) {
     // los MB por 1024 x 1024 (así se convierten MB a bytes).
     const LIMITE_MB = 10;
     if (file.size > LIMITE_MB * 1024 * 1024) {
-      setError(`El archivo pesa demasiado (máximo ${LIMITE_MB}MB). Verifica que sea el archivo correcto.`);
+      fallar(`El archivo pesa demasiado (máximo ${LIMITE_MB}MB). Verifica que sea el archivo correcto.`);
       return;
     }
 
@@ -84,7 +113,7 @@ export default function FileUploader({ onDatosCargados }) {
       // PASO 5: Si parseExcel.js lanzó un error (por ejemplo, "faltan
       // columnas" o "las fechas no son válidas"), lo atrapamos aquí y
       // mostramos su mensaje al usuario en vez de dejar que la app truene.
-      setError(e.message || "No se pudo leer el archivo. Verifica que sea el formato correcto.");
+      fallar(e.message || "No se pudo leer el archivo. Verifica que sea el formato correcto.");
 
     } finally {
       // "finally" se ejecuta SIEMPRE, haya salido bien o mal el try.
@@ -95,74 +124,83 @@ export default function FileUploader({ onDatosCargados }) {
 
   // ---------------------------------------------------------------------
   // A partir de aquí: lo que se DIBUJA en pantalla.
+  // Los estilos viven en index.css (clase .dropzone).
   // ---------------------------------------------------------------------
   return (
     <div
-      // Estos tres "onDrag/onDrop" son los que permiten ARRASTRAR el
-      // archivo directamente encima de la cajita, en vez de tener que
-      // hacer click y buscarlo en una ventana.
+      ref={zonaRef}
+      className="dropzone"
+      // role="button" + tabIndex={0}: la cajita se puede enfocar con Tab y
+      // activar con Enter o Espacio, igual que un botón normal. Sin esto,
+      // quien navega solo con teclado no podía subir el archivo.
+      role="button"
+      tabIndex={0}
+      aria-label="Seleccionar archivo Excel de permisos"
+      aria-describedby={error ? "dropzone-error" : undefined}
+      aria-busy={cargando}
+      data-dragging={arrastrando}
+      data-busy={cargando}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          inputRef.current?.click();
+        }
+      }}
+      // Estos tres "onDrag/onDrop" permiten ARRASTRAR el archivo encima
+      // de la cajita en vez de buscarlo en una ventana.
       onDragOver={(e) => {
-        e.preventDefault(); // sin esto, el navegador no dejaría "soltar" el archivo aquí
+        e.preventDefault(); // sin esto, el navegador no deja "soltar" el archivo aquí
         setArrastrando(true); // pinta la cajita en verde mientras el archivo está encima
       }}
-      onDragLeave={() => setArrastrando(false)} // el archivo salió de la zona sin soltarse
+      onDragLeave={() => setArrastrando(false)}
       onDrop={(e) => {
         e.preventDefault();
         setArrastrando(false);
-        // e.dataTransfer.files es la lista de archivos soltados;
-        // tomamos el primero ([0]) con el símbolo "?." por si viniera vacío.
         procesarArchivo(e.dataTransfer.files?.[0]);
       }}
-      // Si el usuario hace click en cualquier parte de la cajita (no solo
-      // en el input invisible), simulamos un click en el input real.
-      onClick={() => inputRef.current?.click()}
-      style={{
-        border: `2px dashed ${arrastrando ? "#0F6E56" : "#DAD6C8"}`, // borde punteado, verde si está arrastrando
-        borderRadius: 12,
-        padding: "48px 24px",
-        textAlign: "center",
-        cursor: "pointer",
-        background: arrastrando ? "#EAF3F0" : "#FFFFFF", // fondo verde clarito al arrastrar
-        transition: "border-color 0.15s, background 0.15s", // animación suave del cambio de color
-      }}
+      // Click en cualquier parte de la cajita = click en el input real.
+      onClick={() => { if (!cargando) inputRef.current?.click(); }}
     >
-      {/* Este <input> es el que REALMENTE abre la ventana de "elegir archivo"
-          del sistema operativo. Está oculto (display: none) porque preferimos
-          que el usuario interactúe con toda la cajita bonita de arriba, no
-          con el botón feo por defecto del navegador. */}
+      {/* El <input> real que abre la ventana de "elegir archivo". Está
+          oculto porque el usuario interactúa con la cajita de arriba. */}
       <input
         ref={inputRef}
         type="file"
-        accept=".xlsx,.xls" // le sugiere al explorador de archivos que filtre por estos tipos
+        accept=".xlsx,.xls"
+        tabIndex={-1}
         style={{ display: "none" }}
-        onChange={(e) => procesarArchivo(e.target.files?.[0])}
+        onChange={(e) => {
+          procesarArchivo(e.target.files?.[0]);
+          e.target.value = ""; // permite volver a elegir el MISMO archivo después de un error
+        }}
       />
 
-      {/* Mientras se está procesando el archivo, mostramos solo este texto... */}
       {cargando ? (
-        <p style={{ color: "#6B6858", fontSize: 14 }}>Procesando archivo…</p>
+        // Mientras se procesa: spinner + texto (aria-live avisa a lectores de pantalla)
+        <div aria-live="polite" style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12, color: "var(--brand)" }}>
+          <Loader2 size={28} className="spin" aria-hidden="true" />
+          <p style={{ color: "var(--ink-2)", fontSize: 14 }}>Procesando archivo…</p>
+        </div>
       ) : (
-        // ...y si NO se está procesando, mostramos el ícono + instrucciones.
         <>
-          <div style={{ display: "flex", justifyContent: "center", marginBottom: 12, color: "#0F6E56" }}>
-            {/* Cambia el ícono según si hay algo arrastrándose encima o no */}
-            {arrastrando ? <FileSpreadsheet size={32} /> : <Upload size={32} />}
+          {/* dz-icon: al arrastrar un archivo encima, el ícono se levanta
+              un poco (ver index.css), como diciendo "suéltalo aquí". */}
+          <div className="dz-icon" style={{ display: "flex", justifyContent: "center", marginBottom: 12, color: "var(--brand)" }}>
+            {/* Cambia el ícono según si hay algo arrastrándose encima */}
+            {arrastrando ? <FileSpreadsheet size={32} aria-hidden="true" /> : <Upload size={32} aria-hidden="true" />}
           </div>
-          <p style={{ fontWeight: 600, color: "#1E2A38", marginBottom: 4 }}>
-            Selecciona o arrastra tu Excel de permisos
+          <p style={{ fontWeight: 600, color: "var(--ink)", marginBottom: 4 }}>
+            {arrastrando ? "Suelta el archivo para cargarlo" : "Selecciona o arrastra tu Excel de permisos"}
           </p>
-          <p style={{ fontSize: 13, color: "#6B6858", margin: 0 }}>
+          <p style={{ fontSize: 13, color: "var(--ink-2)" }}>
             Formatos aceptados: .xlsx, .xls — el archivo no sale de tu dispositivo
           </p>
         </>
       )}
 
-      {/* Si hay algún mensaje de error guardado en el estado, lo mostramos
-          en rojo debajo de todo. Si "error" es null, esta línea no dibuja
-          nada (así funciona el "&&" en React: si lo de la izquierda es
-          falso/null, no muestra lo de la derecha). */}
+      {/* role="alert": el lector de pantalla anuncia el error apenas aparece */}
       {error && (
-        <p style={{ color: "#D85A30", fontSize: 13, marginTop: 12 }}>{error}</p>
+        <p id="dropzone-error" role="alert" className="dropzone-error">{error}</p>
       )}
     </div>
   );

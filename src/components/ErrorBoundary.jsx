@@ -71,8 +71,8 @@ export default class ErrorBoundary extends Component {
       return (
         <div
           style={{
-            fontFamily: "ui-sans-serif, system-ui, sans-serif",
-            background: "#F6F4EF",
+            fontFamily: "var(--sans)",
+            background: "var(--paper)",
             minHeight: "100vh",      // ocupa como mínimo toda la altura de la pantalla
             display: "flex",
             alignItems: "center",    // centra verticalmente
@@ -84,16 +84,16 @@ export default class ErrorBoundary extends Component {
 
             <h1
               style={{
-                fontFamily: "Georgia, serif",
+                fontFamily: "var(--serif)",
                 fontSize: 22,
-                color: "#1E2A38",
+                color: "var(--ink)",
                 marginBottom: 8,
               }}
             >
               Algo salió mal
             </h1>
 
-            <p style={{ color: "#6B6858", fontSize: 14, marginBottom: 20 }}>
+            <p style={{ color: "var(--ink-2)", fontSize: 14, marginBottom: 20 }}>
               Ocurrió un error inesperado al procesar los datos. Verifica que
               el Excel tenga el formato correcto e intenta de nuevo.
             </p>
@@ -102,16 +102,10 @@ export default class ErrorBoundary extends Component {
                 lo que borra el error y vuelve a la pantalla inicial
                 de subir el Excel. */}
             <button
+              type="button"
+              className="btn btn-primary"
               onClick={() => window.location.reload()}
-              style={{
-                padding: "10px 20px",
-                borderRadius: 6,
-                border: "1px solid #0F6E56",
-                background: "#0F6E56",
-                color: "#FFFFFF",
-                fontSize: 14,
-                cursor: "pointer",
-              }}
+              style={{ padding: "10px 20px", fontSize: 14 }}
             >
               Recargar página
             </button>
