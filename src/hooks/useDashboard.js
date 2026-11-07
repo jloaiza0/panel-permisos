@@ -11,11 +11,18 @@ import {
   TODOS, valoresUnicos, filtrar, calcKpis, kpisAnioAnterior, contarPorMes, contarPor,
 } from "../lib/estadisticas.js";
 
+/** @type {Filtros} */
 const FILTROS_INICIALES = { anio: TODOS, concepto: TODOS, mes: TODOS };
 
+/** @param {Registro[]} datos */
 export function useDashboard(datos) {
   const [filtros, setFiltros] = useState(FILTROS_INICIALES);
-  const cambiarFiltro = useCallback((campo, valor) => setFiltros((f) => ({ ...f, [campo]: valor })), []);
+  const cambiarFiltro = useCallback(
+    /** @type {<K extends keyof Filtros>(campo: K, valor: Filtros[K]) => void} */
+    (campo, valor) => setFiltros((f) => ({ ...f, [campo]: valor })),
+    []
+  );
+  const limpiarFiltros = useCallback(() => setFiltros(FILTROS_INICIALES), []);
 
   const anios = useMemo(() => valoresUnicos(datos, "anio"), [datos]);
   const conceptos = useMemo(() => valoresUnicos(datos, "concepto"), [datos]);
@@ -32,7 +39,7 @@ export function useDashboard(datos) {
   const topPersonas = useMemo(() => contarPor(filtrado, "nombre", 10), [filtrado]);
 
   return {
-    filtros, cambiarFiltro,
+    filtros, cambiarFiltro, limpiarFiltros,
     anios, conceptos, personas,
     filtrado, kpis, kpisPrev, porMes, porConcepto, topPersonas,
   };

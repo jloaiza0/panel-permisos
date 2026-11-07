@@ -28,6 +28,7 @@ export const C = {
 // Cada concepto tiene SIEMPRE el mismo color, sin importar su posición en el
 // ranking (si no, al filtrar cambiarían de color). Un concepto nuevo que no
 // esté aquí usa el color de respaldo.
+/** @type {Record<string, string>} */
 const CONCEPT_COLORS = {
   "CITA MÉDICA": SERIES[0],
   "PERSONAL": SERIES[1],
@@ -37,8 +38,10 @@ const CONCEPT_COLORS = {
 };
 const FALLBACK_COLOR = "var(--fallback)";
 
+/** @param {string} concepto */
 export const colorConcepto = (concepto) => CONCEPT_COLORS[concepto] || FALLBACK_COLOR;
 
 // Color de un año según su posición en la lista de años del Excel: 2024 es
 // del mismo color en todas las gráficas.
+/** @param {number[]} anios @param {number} anio */
 export const colorDeAnio = (anios, anio) => SERIES[Math.max(0, anios.indexOf(anio)) % SERIES.length];

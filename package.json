@@ -1,17 +1,23 @@
 {
   "name": "panel-permisos",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Panel de ausentismo: dashboard de permisos a partir de un Excel, procesado en el navegador.",
   "type": "module",
+  "engines": {
+    "node": ">=22.12"
+  },
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "lint": "oxlint",
+    "typecheck": "tsc -p jsconfig.json",
     "test": "vitest run",
-    "check": "npm run lint && npm test && npm run build",
+    "test:coverage": "vitest run --coverage",
+    "check": "npm run lint && npm run typecheck && npm run test:coverage && npm run build",
     "preview": "vite preview",
-    "predeploy": "npm run lint && npm test",
+    "plantilla": "node scripts/generar-plantilla.mjs",
+    "predeploy": "npm run lint && npm run typecheck && npm test",
     "deploy": "vite build && gh-pages -d dist"
   },
   "dependencies": {
@@ -24,11 +30,17 @@
     "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
   },
   "devDependencies": {
+    "@testing-library/jest-dom": "^7.0.1",
+    "@testing-library/react": "^16.3.3",
+    "@testing-library/user-event": "^14.6.8",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.4",
+    "@vitest/coverage-v8": "^5.1.0",
     "gh-pages": "^6.3.0",
+    "jsdom": "^31.0.0",
     "oxlint": "^1.75.0",
+    "typescript": "^5.9.3",
     "vite": "^8.2.0",
     "vitest": "^5.1.0"
   }

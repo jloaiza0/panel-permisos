@@ -12,7 +12,9 @@ export default function ResumenKpis({ kpis, kpisPrev }) {
   const fmt = (n, decimales = 0) => n.toLocaleString("es-CO", { maximumFractionDigits: decimales });
 
   return (
-    <div className="grid-kpi reveal" style={{ "--i": 2 }}>
+    // id="resultados": destino del enlace "Saltar a los resultados".
+    // tabIndex={-1} permite que reciba el foco al saltar.
+    <div id="resultados" tabIndex={-1} className="grid-kpi reveal" style={{ "--i": 2 }}>
       <KpiCard icon={<FileText size={16} />} label="Total permisos" value={fmt(kpis.totalPermisos)} delta={delta("totalPermisos")} />
       <KpiCard icon={<Clock size={16} />} label="Horas totales" value={fmt(kpis.totalHoras)} delta={delta("totalHoras")} />
       <KpiCard icon={<Users size={16} />} label="Personas con permisos" value={fmt(kpis.personas)} delta={delta("personas")} />

@@ -43,12 +43,17 @@ export const TIEMPO_MAXIMO_MS = 30000;
 // mostrar tal cual. Cualquier otro error (de la librería, del navegador)
 // trae texto técnico en inglés, y en su lugar mostramos un mensaje general.
 export class ErrorArchivo extends Error {}
+
+/** @typedef {typeof import("xlsx")} LibXLSX */
+/** @typedef {unknown[]} Fila  una fila del Excel: un valor por celda */
+/** @typedef {{ idxFecha: number, idxNombre: number, idxConcepto: number, idxTiempo: number }} Columnas */
 export const MENSAJE_GENERAL =
   "No se pudo leer el archivo. Verifica que sea un Excel válido (.xlsx o .xls).";
 
 // Lee el "índice" del zip (está al final del archivo) y suma cuánto pesan
 // todos sus archivos internos ya descomprimidos. No descomprime nada: solo
 // lee números del índice, así que es instantáneo.
+/** @param {Uint8Array} bytes */
 function revisarTamanoZip(bytes) {
   // Los .xlsx empiezan con "PK" (la firma de zip). Los .xls viejos usan
   // otro formato, sin compresión, así que no aplica.
@@ -94,7 +99,9 @@ function revisarTamanoZip(bytes) {
 // "xlsxPromise" guarda el resultado la primera vez que se pide, para que
 // si el usuario sube dos archivos seguidos, la segunda vez no se vuelva a
 // descargar la librería — ya la tenemos guardada.
+/** @type {Promise<LibXLSX> | null} */
 let xlsxPromise = null;
+/** @returns {Promise<LibXLSX>} */
 export function cargarXLSX() {
   if (!xlsxPromise) xlsxPromise = import("xlsx");
   return xlsxPromise;
@@ -110,6 +117,7 @@ export function cargarXLSX() {
 // completo. Por ejemplo: medio día (12:00) se guarda como 0.5.
 // Esta función convierte ese número (o un objeto Date) a minutos totales,
 // que es una unidad mucho más fácil de sumar y promediar después.
+/** @param {unknown} valor @returns {number | null} */
 function tiempoAMinutos(valor) {
   if (valor == null || valor === "") return null;
 
@@ -136,6 +144,7 @@ function tiempoAMinutos(valor) {
 // Esta función lo deja siempre en MAYÚSCULA y sin espacios sobrantes, para
 // que "Personal" y "personal " se traten como el mismo concepto en las
 // gráficas (si no hiciéramos esto, aparecerían como dos barras distintas).
+/** @param {unknown} valor */
 function normalizarConcepto(valor) {
   return (valor || "").toString().trim().toUpperCase();
 }
@@ -155,6 +164,11 @@ function normalizarConcepto(valor) {
 // ejemplo "Agt" en vez de "Ago"), lo que hacía que algunos meses
 // desaparecieran de las gráficas. Calcularlo siempre desde la fecha real
 // es mucho más confiable.
+/**
+ * @param {unknown} valor
+ * @param {LibXLSX} XLSX
+ * @returns {{ iso: string, anio: number, mes: string } | null}
+ */
 function excelFechaAPartes(valor, XLSX) {
   let y, m, d; // year (año), month (mes), day (día)
 
@@ -191,6 +205,7 @@ function excelFechaAPartes(valor, XLSX) {
 // ["FECHA", "NOMBRE", "CONCEPTO"], buscar "nombre" devuelve 1 (la segunda
 // posición, empezando a contar desde 0).
 // Si no la encuentra en ninguna columna, devuelve -1.
+/** @param {string[]} headers @param {string} palabra */
 function headerIncluye(headers, palabra) {
   return headers.findIndex(h => h.includes(palabra));
 }
@@ -201,6 +216,7 @@ function headerIncluye(headers, palabra) {
 // nombre en la D", etc. Pero si alguien reordena las columnas del Excel,
 // eso rompería todo silenciosamente. Ahora, sin importar el orden, buscamos
 // la columna que DICE "fecha", la que DICE "nombre", etc.
+/** @param {Fila[]} filas @returns {Columnas} */
 function ubicarColumnas(filas) {
   if (!filas || filas.length < 2) {
     // filas[0] serían los encabezados; si no hay ni una fila más después,
@@ -241,6 +257,7 @@ function ubicarColumnas(filas) {
 // que hay DEBAJO de ese encabezado realmente parezcan fechas, y no, por
 // ejemplo, números de teléfono o texto random. Esta función revisa una
 // muestra de hasta 20 filas para hacer esa comprobación de sentido común.
+/** @param {Fila[]} filas @param {Columnas} cols */
 function validarContenido(filas, cols) {
   // .slice(1, ...) porque la fila 0 son los encabezados, no datos.
   const muestra = filas.slice(1, Math.min(filas.length, 21));
@@ -300,6 +317,11 @@ function validarContenido(filas, cols) {
 // "export" significa que otros archivos SÍ pueden importar y usar esta
 // función (a diferencia de las de arriba, que no tienen "export" y solo
 // existen para uso interno de este archivo).
+/**
+ * @param {ArrayBuffer} buffer los bytes del archivo
+ * @param {LibXLSX} XLSX la librería ya cargada
+ * @returns {Registro[]}
+ */
 export function leerExcel(buffer, XLSX) {
 
   // Antes de abrirlo, revisamos que no sea una "zip-bomb" (ver PARTE 0).

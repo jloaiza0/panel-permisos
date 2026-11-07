@@ -15,9 +15,36 @@
 // intentaría incluir a sí mismo.
 // ============================================================================
 import { leerExcel, cargarXLSX, ErrorArchivo, MENSAJE_GENERAL, TIEMPO_MAXIMO_MS } from "./parseExcel.js";
+// "?worker&url": Vite compila el worker aparte y nos da su dirección (el
+// lint no conoce estos sufijos de Vite, por eso se le avisa).
+// oxlint-disable-next-line import/default
+import urlWorker from "./excel.worker.js?worker&url";
+
+// La página exige "Trusted Types" (ver vite.config.js): para crear un
+// Worker hay que pasar la dirección por una política declarada. Esta solo
+// acepta la dirección exacta de nuestro worker; cualquier otra la rechaza.
+/** @type {{ createScriptURL(url: string): any } | undefined} */
+let politica;
+/** @returns {string | URL} */
+function urlConfiable() {
+  /** @type {any} */
+  const tt = /** @type {any} */ (globalThis).trustedTypes;
+  if (!tt) return urlWorker; // navegador sin Trusted Types
+  politica ??= tt.createPolicy("excel-worker", {
+    createScriptURL: (/** @type {string} */ url) => {
+      if (url !== urlWorker) throw new TypeError("Dirección de worker no permitida");
+      return url;
+    },
+  });
+  return /** @type {NonNullable<typeof politica>} */ (politica).createScriptURL(urlWorker);
+}
 
 // "async" significa que esta función hace cosas que toman tiempo y por eso
 // se debe usar con "await" desde donde se llama.
+/**
+ * @param {{ arrayBuffer(): Promise<ArrayBuffer> }} file el archivo elegido
+ * @returns {Promise<Registro[]>}
+ */
 export async function parseExcel(file) {
   const buffer = await file.arrayBuffer();
 
@@ -32,8 +59,8 @@ export async function parseExcel(file) {
   }
 
   return new Promise((resolve, reject) => {
-    const worker = new Worker(new URL("./excel.worker.js", import.meta.url), { type: "module" });
-    const terminar = (accion) => { clearTimeout(reloj); worker.terminate(); accion(); };
+    const worker = new Worker(urlConfiable(), { type: "module" });
+    const terminar = (/** @type {() => void} */ accion) => { clearTimeout(reloj); worker.terminate(); accion(); };
 
     const reloj = setTimeout(() => terminar(() => reject(new ErrorArchivo(
       "El archivo tardó demasiado en procesarse. Verifica que sea el archivo correcto."

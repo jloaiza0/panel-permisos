@@ -1,8 +1,12 @@
 # Panel de ausentismo
 
+[![CI](https://github.com/jloaiza0/panel-permisos/actions/workflows/ci.yml/badge.svg)](https://github.com/jloaiza0/panel-permisos/actions/workflows/ci.yml)
+
 Dashboard para analizar los permisos del personal a partir de un Excel.
 Subes el archivo y ves totales, horas, tendencias por mes, comparación entre
 años, el top 10 de personas y el historial de cada una.
+
+**Abrir el panel:** https://jloaiza0.github.io/panel-permisos/
 
 **El archivo nunca sale de tu equipo**: todo se procesa en el navegador. No
 hay servidor ni base de datos.
@@ -19,16 +23,22 @@ cualquier orden; se buscan por nombre, sin importar mayúsculas):
 | `Concepto` | Sí          | Tipo de permiso (PERSONAL, CITA MÉDICA, …)  |
 | `Tiempo`   | No          | Duración en formato de hora de Excel        |
 
-Límites: 10 MB, 100.000 filas.
+Límites: 10 MB, 100.000 filas. En la pantalla de carga hay un botón para
+descargar una **plantilla de ejemplo** (`public/plantilla-permisos.xlsx`).
 
 ## Uso
 
+Requiere Node.js 22.12 o superior (ver `.nvmrc`).
+
 ```bash
 npm install
-npm run dev       # servidor local en http://localhost:5173/panel-permisos/
-npm test          # pruebas
-npm run lint      # revisión de código
-npm run deploy    # pasa lint y pruebas, compila y publica en GitHub Pages
+npm run dev            # servidor local en http://localhost:5173/panel-permisos/
+npm test               # pruebas
+npm run test:coverage  # pruebas + cobertura (mínimo 90 % de líneas)
+npm run lint           # revisión de código
+npm run typecheck      # revisión de tipos de la lógica
+npm run check          # todo lo anterior + build (lo mismo que corre el CI)
+npm run deploy         # pasa lint, tipos y pruebas, compila y publica en GitHub Pages
 ```
 
 ## Estructura
@@ -38,6 +48,7 @@ src/
   main.jsx              arranque + protección anti-clickjacking
   App.jsx               elige pantalla: carga o dashboard
   Dashboard.jsx         layout del dashboard (se descarga aparte)
+  vite-env.d.ts         tipos compartidos (Registro, Filtros)
   constants/            meses y colores de las gráficas
   lib/
     excel/              lectura segura del Excel (Web Worker, límites, zip-bomb)
@@ -45,21 +56,36 @@ src/
     formato.js          números, horas y fechas en formato colombiano
   hooks/                useDashboard (filtros + cálculos), useNarrow
   components/
-    ui/                 Section, KpiCard, MiniStat, YearSelector, ThemeToggle, ErrorBoundary
+    ui/                 Section, KpiCard, MiniStat, YearSelector, ThemeToggle, ErrorBoundary, PiePagina
     charts/             Grafica, ChartTooltip, PeakLabel, chartTheme
     FileUploader.jsx    zona para subir el Excel
   sections/             cada bloque visual del dashboard
   styles/index.css      tokens de diseño (claro/oscuro) y estilos
+  test/                 preparación y datos de las pruebas
+scripts/                generador de la plantilla de ejemplo
 ```
 
-## Seguridad
+Más detalle en [docs/ARQUITECTURA.md](docs/ARQUITECTURA.md). Seguridad en
+[SECURITY.md](SECURITY.md). Cambios por versión en [CHANGELOG.md](CHANGELOG.md).
 
-- Política CSP estricta (solo scripts propios, sin conexiones externas).
-- Bloqueo de la página dentro de marcos de otros sitios.
-- El Excel se lee en un Web Worker con tiempo máximo, límite de filas y
-  columnas, y detección de archivos comprimidos maliciosos (zip-bomb).
-- Los textos del Excel se muestran siempre como texto plano.
+## Calidad
+
+- **Pruebas:** cálculos, lector de Excel (incluidos archivos maliciosos),
+  Web Worker y la interfaz completa con Testing Library. Cobertura mínima
+  exigida: 90 % de líneas.
+- **Tipos:** la lógica se revisa en modo estricto con TypeScript sobre
+  JavaScript (JSDoc), sin migrar a `.ts`.
+- **CI:** cada push a `main` corre lint, tipos, pruebas con cobertura, build
+  y auditoría de dependencias. Dependabot propone actualizaciones semanales.
+
+## Accesibilidad
+
+Navegable con teclado (enlace "Saltar a los resultados", zona de carga
+activable con Enter/Espacio), estados anunciados a lectores de pantalla,
+resumen en texto de cada gráfica, colores aptos para daltonismo, respeta
+"reducir movimiento" y modo claro/oscuro.
 
 ## Tecnologías
 
-React 19, Vite, Recharts, SheetJS (xlsx), Vitest y Oxlint.
+React 19, Vite, Recharts, SheetJS (xlsx), Vitest, Testing Library, Oxlint y
+TypeScript (solo para revisar tipos).

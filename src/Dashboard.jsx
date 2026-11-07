@@ -20,40 +20,49 @@ import GraficasPrincipales from "./sections/GraficasPrincipales.jsx";
 import ComparativoAnios from "./sections/ComparativoAnios.jsx";
 import ResumenPersona from "./sections/ResumenPersona.jsx";
 import ConsultaPersona from "./sections/ConsultaPersona.jsx";
+import PiePagina from "./components/ui/PiePagina.jsx";
 
 export default function Dashboard({ datos, nombreArchivo, onReiniciar }) {
   const d = useDashboard(datos);
   const { filtros, cambiarFiltro, anios } = d;
   const colorAnio = useCallback((a) => colorDeAnio(anios, a), [anios]);
 
-  const limpiarFiltros = () => {
+  // El estado vacío solo ofrece quitar concepto y mes (el año se ve arriba).
+  const quitarConceptoYMes = () => {
     cambiarFiltro("concepto", TODOS);
     cambiarFiltro("mes", TODOS);
   };
 
   return (
-    <main className="page dashboard">
-      <Encabezado nombreArchivo={nombreArchivo} totalRegistros={datos.length} anios={anios}
-        filtros={filtros} onCambiarFiltro={cambiarFiltro} onReiniciar={onReiniciar} />
+    <div className="page">
+      {/* Enlace para saltar los filtros con el teclado (solo se ve al recibir foco) */}
+      <a className="skip-link" href="#resultados">Saltar a los resultados</a>
 
-      <Filtros conceptos={d.conceptos} filtros={filtros} onCambiarFiltro={cambiarFiltro} />
+      <main className="dashboard">
+        <Encabezado nombreArchivo={nombreArchivo} totalRegistros={datos.length} anios={anios}
+          filtros={filtros} onCambiarFiltro={cambiarFiltro} onReiniciar={onReiniciar} />
 
-      <ResumenKpis kpis={d.kpis} kpisPrev={d.kpisPrev} />
+        <Filtros conceptos={d.conceptos} filtros={filtros} onCambiarFiltro={cambiarFiltro}
+          visibles={d.filtrado.length} total={datos.length} onLimpiar={d.limpiarFiltros} />
 
-      {d.filtrado.length === 0 ? (
-        <SinResultados filtros={filtros} onLimpiar={limpiarFiltros} />
-      ) : (
-        <GraficasPrincipales filtros={filtros} porMes={d.porMes} porConcepto={d.porConcepto} topPersonas={d.topPersonas} />
-      )}
+        <ResumenKpis kpis={d.kpis} kpisPrev={d.kpisPrev} />
 
-      {/* El comparativo solo tiene sentido sin año elegido y con 2+ años */}
-      {filtros.anio === TODOS && anios.length > 1 && (
-        <ComparativoAnios datos={datos} anios={anios} colorAnio={colorAnio} />
-      )}
+        {d.filtrado.length === 0 ? (
+          <SinResultados filtros={filtros} onLimpiar={quitarConceptoYMes} />
+        ) : (
+          <GraficasPrincipales filtros={filtros} porMes={d.porMes} porConcepto={d.porConcepto} topPersonas={d.topPersonas} />
+        )}
 
-      <ResumenPersona datos={datos} personas={d.personas} filtros={filtros} />
+        {/* El comparativo solo tiene sentido sin año elegido y con 2+ años */}
+        {filtros.anio === TODOS && anios.length > 1 && (
+          <ComparativoAnios datos={datos} anios={anios} colorAnio={colorAnio} />
+        )}
 
-      <ConsultaPersona registros={d.filtrado} />
-    </main>
+        <ResumenPersona datos={datos} personas={d.personas} filtros={filtros} />
+
+        <ConsultaPersona registros={d.filtrado} />
+      </main>
+      <PiePagina />
+    </div>
   );
 }

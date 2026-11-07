@@ -1,0 +1,6 @@
+# Guarda los archivos de texto con saltos de línea LF (evita las advertencias
+# de CRLF en Windows y diferencias falsas entre equipos).
+* text=auto eol=lf
+*.xlsx binary
+*.png binary
+*.woff2 binary

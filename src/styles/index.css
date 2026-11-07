@@ -181,6 +181,39 @@ input { caret-color: var(--brand); }
   outline-offset: 2px;
 }
 
+/* El título y el bloque de KPIs reciben foco desde el código (al cargar el
+   dashboard y con "Saltar a los resultados"): no necesitan anillo. */
+.page-title:focus, #resultados:focus { outline: none; }
+
+/* Enlace "Saltar a los resultados": invisible hasta que recibe el foco con
+   Tab, para que quien usa teclado no tenga que recorrer todos los filtros. */
+.skip-link {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 20;
+  padding: 8px 12px;
+  border-radius: 6px;
+  background: var(--brand);
+  color: var(--on-brand);
+  font: 600 13px/1.2 var(--sans);
+  text-decoration: none;
+  transform: translateY(-160%);
+  transition: transform 160ms var(--ease-out);
+}
+.skip-link:focus { transform: translateY(0); }
+
+/* Pie de página (PiePagina.jsx) */
+.site-footer {
+  margin-top: 32px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line-soft);
+  font-size: var(--fs-meta);
+  color: var(--ink-2);
+  text-align: center;
+}
+.page-upload .site-footer { border-top: none; margin-top: 0; padding-top: 0; }
+
 /* Números con ancho fijo: así las cifras de KPIs y tablas no "bailan"
    al cambiar de filtro y quedan alineadas en columnas. */
 .num { font-variant-numeric: tabular-nums; }
@@ -232,6 +265,8 @@ input { caret-color: var(--brand); }
     color 150ms ease,
     transform 160ms var(--ease-out);
 }
+/* Botón sin borde, para acciones secundarias (Limpiar filtros) */
+.btn-ghost { border-color: transparent; background: transparent; padding-inline: 8px; }
 .btn-primary {
   background: var(--brand);
   border-color: var(--brand);
@@ -405,6 +440,17 @@ input { caret-color: var(--brand); }
   gap: 8px;
   flex-wrap: wrap;
 }
+/* Línea "Mostrando X de Y permisos" + Limpiar filtros (Filtros.jsx) */
+.filter-summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  min-height: 32px;
+  font-size: var(--fs-label);
+  color: var(--ink-2);
+}
+.filter-summary strong { color: var(--ink); font-weight: 650; }
 .filter-label {
   display: inline-flex;
   align-items: center;
@@ -599,7 +645,44 @@ input { caret-color: var(--brand); }
 .dashboard > .page-head { margin-bottom: 4px; }
 .filters { display: grid; gap: 12px; margin-bottom: 4px; }
 
-/* Pantalla inicial (PantallaCarga.jsx) */
+/* Pantalla inicial (PantallaCarga.jsx): contenido centrado y el pie de
+   página abajo. */
+.page-upload {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 40px;
+}
+.format-help {
+  margin-top: 28px;
+  padding-top: 20px;
+  border-top: 1px solid var(--line-soft);
+  text-align: center;
+}
+.format-title { font-size: var(--fs-label); font-weight: 600; color: var(--ink); margin-bottom: 10px; }
+.format-list {
+  list-style: none;
+  margin: 0 0 16px;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+.format-list li {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 5px 10px;
+  border: 1px solid var(--line-soft);
+  border-radius: 6px;
+  background: var(--surface);
+  font-size: var(--fs-label);
+}
+.format-col { font-weight: 600; color: var(--ink); }
+.format-note { font-size: var(--fs-meta); color: var(--ink-2); }
+.format-download { text-decoration: none; }
 .upload-panel { max-width: 480px; width: 100%; }
 .upload-title { text-align: center; margin-bottom: 8px; }
 .upload-lead { text-align: center; color: var(--ink-2); font-size: 15px; margin-bottom: 28px; }

@@ -42,6 +42,7 @@ export default function ConsultaPersona({ registros }) {
           </p>
           <div className="table-wrap">
             <table className="table num">
+              <caption className="sr-only">Historial de permisos que coinciden con “{texto.trim()}”</caption>
               <thead>
                 <tr>
                   <th scope="col">Fecha</th>

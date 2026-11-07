@@ -1,5 +1,6 @@
-# Revisa cada cambio que llega a main (o a un pull request): lint, pruebas
-# y build. No publica nada: la publicación sigue siendo "npm run deploy".
+# Revisa cada cambio que llega a main (o a un pull request): lint, tipos,
+# pruebas con cobertura mínima, build y dependencias vulnerables.
+# No publica nada: la publicación sigue siendo "npm run deploy".
 name: CI
 
 on:
@@ -13,13 +14,17 @@ permissions:
 jobs:
   verificar:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version-file: .nvmrc
           cache: npm
       - run: npm ci
       - run: npm run lint
-      - run: npm test
+      - run: npm run typecheck
+      - run: npm run test:coverage
       - run: npm run build
+      - name: Dependencias sin vulnerabilidades altas
+        run: npm audit --omit=dev --audit-level=high

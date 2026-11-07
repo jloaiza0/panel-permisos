@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import { FileSpreadsheet, Printer, RotateCcw } from "lucide-react";
 import YearSelector from "../components/ui/YearSelector.jsx";
 import ThemeToggle from "../components/ui/ThemeToggle.jsx";
@@ -13,10 +14,16 @@ export default function Encabezado({ nombreArchivo, totalRegistros, anios, filtr
     `Mes: ${filtros.mes}`,
   ].join(" · ");
 
+  // Al aparecer el dashboard, el foco pasa al título: el lector de pantalla
+  // anuncia que cambió la página y la tecla Tab sigue desde aquí (y no
+  // desde una zona de carga que ya no existe).
+  const tituloRef = useRef(null);
+  useEffect(() => { tituloRef.current?.focus(); }, []);
+
   return (
     <header className="page-head reveal" style={{ "--i": 0 }}>
       <div className="page-head-text">
-        <h1 className="page-title">Panel de ausentismo</h1>
+        <h1 ref={tituloRef} tabIndex={-1} className="page-title">Panel de ausentismo</h1>
         <p className="page-meta">
           <FileSpreadsheet size={14} aria-hidden="true" />
           <span className="page-meta-file" title={nombreArchivo}>{nombreArchivo}</span>

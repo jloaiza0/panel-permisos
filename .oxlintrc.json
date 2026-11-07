@@ -2,6 +2,7 @@
   "$schema": "./node_modules/oxlint/configuration_schema.json",
   "plugins": ["react", "oxc", "import", "jsx-a11y", "vitest"],
   "env": { "browser": true, "es2024": true },
+  "globals": { "__APP_VERSION__": "readonly" },
   "categories": {
     "correctness": "error",
     "suspicious": "warn"
@@ -17,5 +18,5 @@
     "jsx-a11y/prefer-tag-over-role": "off",
     "import/no-unassigned-import": ["warn", { "allow": ["**/*.css", "@fontsource-variable/**"] }]
   },
-  "ignorePatterns": ["dist"]
+  "ignorePatterns": ["dist", "src/**/*.d.ts"]
 }
