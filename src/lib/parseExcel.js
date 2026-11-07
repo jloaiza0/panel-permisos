@@ -35,6 +35,11 @@
 // "xlsxPromise" guarda el resultado la primera vez que se pide, para que
 // si el usuario sube dos archivos seguidos, la segunda vez no se vuelva a
 // descargar la librería — ya la tenemos guardada.
+// Límites de seguridad: protegen la pestaña de archivos gigantes o
+// manipulados que la dejarían congelada.
+const MAX_FILAS = 100000;
+const MAX_COLUMNAS = 50;
+
 let xlsxPromise = null;
 function cargarXLSX() {
   if (!xlsxPromise) xlsxPromise = import("xlsx");
@@ -55,6 +60,9 @@ function tiempoAMinutos(valor) {
   if (valor == null || valor === "") return null;
 
   if (typeof valor === "number") {
+    // Descartamos valores imposibles (negativos, NaN o de más de 31 días)
+    // para que un dato mal digitado no dispare los totales de horas.
+    if (!Number.isFinite(valor) || valor < 0 || valor > 31) return null;
     // 1 día completo = 24 horas x 60 minutos = 1440 minutos.
     // Si el valor es, por ejemplo, 0.5 (medio día) → 0.5 x 1440 = 720 minutos.
     return Math.round(valor * 24 * 60);
@@ -253,17 +261,39 @@ export async function parseExcel(file) {
   // XLSX.read() interpreta esos bytes como un archivo Excel real.
   // cellDates: true le pide a la librería que, cuando pueda, nos entregue
   // las fechas como objetos Date de JavaScript en vez de números raros.
-  const workbook = XLSX.read(buffer, { type: "array", cellDates: true });
+  // sheetRows: solo lee las primeras MAX_FILAS filas (+1 por el encabezado).
+  // Un Excel pequeño puede "decir" que ocupa un millón de filas y congelar
+  // la pestaña; así cortamos antes de procesar todo eso.
+  const workbook = XLSX.read(buffer, { type: "array", cellDates: true, sheetRows: MAX_FILAS + 1 });
 
   // Un Excel puede tener varias hojas (pestañas); tomamos la primera.
   const hoja = workbook.Sheets[workbook.SheetNames[0]];
+  if (!hoja) throw new Error("El archivo no tiene hojas con datos.");
+
+  // Solo necesitamos unas pocas columnas: solo necesitamos unas pocas, así que recortamos
+  // el rango a MAX_COLUMNAS para no recorrer miles de celdas vacías.
+  if (hoja["!ref"]) {
+    const rango = XLSX.utils.decode_range(hoja["!ref"]);
+    rango.e.c = Math.min(rango.e.c, MAX_COLUMNAS - 1);
+    hoja["!ref"] = XLSX.utils.encode_range(rango);
+  }
 
   // Convierte esa hoja en un arreglo de arreglos: cada elemento de "filas"
   // es una fila del Excel, y cada elemento DENTRO de esa fila es el valor
   // de una celda. header: 1 le dice "no me arregles nada, dame las filas
   // en crudo, tal como están" (nosotros nos encargamos de interpretar los
   // encabezados manualmente en ubicarColumnas).
-  const filas = XLSX.utils.sheet_to_json(hoja, { header: 1, defval: null });
+  // blankrows: false omite filas vacías (p. ej. un formato aplicado a toda
+  // la columna), así solo contamos filas que de verdad tienen datos.
+  const filas = XLSX.utils.sheet_to_json(hoja, { header: 1, defval: null, blankrows: false });
+
+  // Si se llenó el cupo de lectura, el archivo trae más filas de las
+  // permitidas: avisamos en vez de mostrar datos incompletos sin decir nada.
+  if (filas.length > MAX_FILAS) {
+    throw new Error(
+      `El archivo tiene demasiadas filas (máximo ${MAX_FILAS.toLocaleString("es-CO")}). Verifica que sea el archivo correcto.`
+    );
+  }
 
   // Aquí es donde entra el "guardián de calidad": si algo no cuadra,
   // estas dos funciones lanzan un error y la ejecución se detiene aquí

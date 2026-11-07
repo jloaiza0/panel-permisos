@@ -292,7 +292,7 @@ export default function App() {
   // Datos para la gráfica "Por tipo de permiso": cuenta cuántos permisos
   // hay de cada concepto, y los ordena de mayor a menor cantidad.
   const porConcepto = useMemo(() => {
-    const map = {};
+    const map = Object.create(null); // sin prototipo: un concepto llamado "constructor" o "__proto__" cuenta normal
     filtrado.forEach(r => {
       const c = r.concepto || "Sin dato";
       map[c] = (map[c] || 0) + 1;
@@ -305,7 +305,7 @@ export default function App() {
   // Datos para "Top 10 personas": cuenta permisos por persona, ordena de
   // mayor a menor, y se queda solo con las primeras 10 (.slice(0, 10)).
   const topPersonas = useMemo(() => {
-    const map = {};
+    const map = Object.create(null); // sin prototipo (ver porConcepto)
     filtrado.forEach(r => { map[r.nombre] = (map[r.nombre] || 0) + 1; });
     return Object.entries(map)
       .map(([nombre, cantidad]) => ({ nombre, cantidad }))
@@ -424,7 +424,7 @@ export default function App() {
         return { anio: a, cantidad: regsAnio.length, horas: Number((minutos / 60).toFixed(1)) };
       });
 
-      const conceptoMap = {};
+      const conceptoMap = Object.create(null);
       regs.forEach(r => { conceptoMap[r.concepto] = (conceptoMap[r.concepto] || 0) + 1; });
       const porConceptoPersona = Object.entries(conceptoMap)
         .map(([concepto, cantidad]) => ({ concepto, cantidad }))
@@ -447,7 +447,7 @@ export default function App() {
     regs.forEach(r => { if (mesMap[r.mes]) mesMap[r.mes].cantidad += 1; });
     const porMesPersona = MESES.map(m => mesMap[m]);
 
-    const conceptoMap = {};
+    const conceptoMap = Object.create(null);
     regs.forEach(r => { conceptoMap[r.concepto] = (conceptoMap[r.concepto] || 0) + 1; });
     const porConceptoPersona = Object.entries(conceptoMap)
       .map(([concepto, cantidad]) => ({ concepto, cantidad }))
