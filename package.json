@@ -1,7 +1,7 @@
 {
   "name": "panel-permisos",
   "private": true,
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Panel de ausentismo: dashboard de permisos a partir de un Excel, procesado en el navegador.",
   "type": "module",
   "engines": {

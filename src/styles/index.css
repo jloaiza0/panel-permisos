@@ -187,10 +187,14 @@ input { caret-color: var(--brand); }
 
 /* Enlace "Saltar a los resultados": invisible hasta que recibe el foco con
    Tab, para que quien usa teclado no tenga que recorrer todos los filtros. */
+/* Se oculta con opacidad (no moviéndolo fuera de la pantalla): así no
+   depende de dónde quede posicionado y sigue siendo enfocable y legible
+   para lectores de pantalla. Aparece sobre el título al recibir el foco. */
+.page-head-text { position: relative; }
 .skip-link {
   position: absolute;
-  top: 8px;
-  left: 8px;
+  top: -6px;
+  left: 0;
   z-index: 20;
   padding: 8px 12px;
   border-radius: 6px;
@@ -198,10 +202,13 @@ input { caret-color: var(--brand); }
   color: var(--on-brand);
   font: 600 13px/1.2 var(--sans);
   text-decoration: none;
-  transform: translateY(-160%);
-  transition: transform 160ms var(--ease-out);
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-4px);
+  transition: opacity 150ms ease, transform 160ms var(--ease-out);
 }
-.skip-link:focus { transform: translateY(0); }
+.skip-link:focus { opacity: 1; pointer-events: auto; transform: none; }
 
 /* Pie de página (PiePagina.jsx) */
 .site-footer {

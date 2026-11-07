@@ -1,5 +1,11 @@
 # Cambios
 
+## 1.2.1 — 2026-11-07
+
+### Correcciones
+- El enlace "Saltar a los resultados" asomaba sobre el título aunque no tuviera
+  el foco. Ahora queda invisible hasta que se llega a él con Tab.
+
 ## 1.2.0 — 2026-11-07
 
 ### Accesibilidad
