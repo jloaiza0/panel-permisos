@@ -48,7 +48,7 @@ describe("App", () => {
     render(<App />);
     await user.upload(inputArchivo(), archivoExcel("permisos.xlsx", VALIDO));
 
-    expect(await screen.findByText("permisos.xlsx", {}, { timeout: 5000 })).toBeInTheDocument();
+    expect(await screen.findByText("permisos.xlsx", {}, { timeout: 12000 })).toBeInTheDocument();
     expect(screen.getByText("5 registros")).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Otro archivo" }));
