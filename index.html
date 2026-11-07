@@ -1,27 +1,29 @@
 <!doctype html>
 <html lang="es">
   <head>
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-csta6CCmj32qYos1hrqlDaOcy/2KNKJ0u25EwgIz7Ls='; style-src 'self'; worker-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-+bqJ7zX2ZyxOrWMzQBbNayxrAmaihcrZCIFUbPcBXkc='; style-src 'self'; worker-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'" />
     <meta charset="UTF-8" />
     <meta name="robots" content="noindex, nofollow" />
     <link rel="icon" type="image/svg+xml" href="/panel-permisos/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#F6F4EF" />
     <title>Panel de ausentismo</title>
-    <!-- Aplica el modo oscuro ANTES de que cargue la app, si quedó guardado
-         (evita que la página aparezca un instante en blanco). -->
+    <!-- Aplica el tema ANTES de que cargue la app (evita un parpadeo blanco):
+         el que el usuario eligió con el botón sol/luna o, la primera vez,
+         el modo de su sistema operativo. -->
     <script>
       try {
-        if (localStorage.getItem("panel-tema") === "dark") {
+        var tema = localStorage.getItem("panel-tema");
+        if (tema === "dark" || (!tema && matchMedia("(prefers-color-scheme: dark)").matches)) {
           document.documentElement.dataset.theme = "dark";
           document.querySelector('meta[name="theme-color"]').setAttribute("content", "#14171B");
         }
       } catch (e) {}
     </script>
-    <script type="module" crossorigin src="/panel-permisos/assets/index-B5CADUP9.js"></script>
-    <link rel="stylesheet" crossorigin href="/panel-permisos/assets/index-CqvmVjgz.css">
+    <script type="module" crossorigin src="/panel-permisos/assets/index-BsN6BYJ1.js"></script>
+    <link rel="stylesheet" crossorigin href="/panel-permisos/assets/index-CYcW4lNL.css">
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root"></div>
   </body>
 </html>
